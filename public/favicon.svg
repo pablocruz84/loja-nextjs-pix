@@ -1,0 +1,15 @@
+<svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Fundo cinza escuro -->
+  <rect width="32" height="32" rx="4" fill="#4A4A4A"/>
+  
+  <!-- Ícone de casa em branco -->
+  <path d="M16 6L8 12V24C8 24.5304 8.21071 25.0391 8.58579 25.4142C8.96086 25.7893 9.46957 26 10 26H14V18H18V26H22C22.5304 26 23.0391 25.7893 23.4142 25.4142C23.7893 25.0391 24 24.5304 24 24V12L16 6Z" 
+        fill="white" 
+        stroke="white" 
+        stroke-width="1.5" 
+        stroke-linecap="round" 
+        stroke-linejoin="round"/>
+  
+  <!-- Detalhe laranja (opcional) -->
+  <circle cx="16" cy="10" r="2" fill="#FF6B35"/>
+</svg>
