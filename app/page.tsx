@@ -932,65 +932,36 @@ export default function Home() {
     )}
 
     {/* FOOTER */}
-<footer className="bg-[#0d4a76] text-white mt-auto w-full">
-  <div className="max-w-6xl mx-auto px-3 sm:px-4 py-3 sm:py-4 flex flex-col items-center gap-1.5 sm:gap-2 text-center">
-    
-    {/* Nome da empresa */}
-    <h3 className="text-xs sm:text-sm md:text-base font-bold">
-      Fácil Material de Construção e Bazar
-    </h3>
-    
-    {/* Endereço */}
-    <div className="text-[10px] sm:text-xs text-gray-300 space-y-0.5">
-      <div className="flex items-center justify-center gap-1 sm:gap-1.5">
-        <svg className="w-3 h-3 sm:w-3.5 sm:h-3.5 fill-gray-300 flex-shrink-0" viewBox="0 0 24 24">
-          <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
-        </svg>
-        <span className="hidden sm:inline">Estrada Professor Leandro Farias Sarzedas</span>
-        <span className="sm:hidden">Est. Prof. Leandro F. Sarzedas</span>
+    <footer className="bg-[#0d4a76] text-white mt-auto w-full">
+      <div className="max-w-6xl mx-auto px-4 py-4 flex flex-col items-center gap-2 text-center">
+        <h3 className="text-sm md:text-base font-bold">
+          Fácil Material de Construção e Bazar
+        </h3>
+        
+        <div className="text-xs text-gray-300 space-y-0.5">
+          <div className="flex items-center justify-center gap-1.5">
+            <svg className="w-3.5 h-3.5 fill-gray-300 flex-shrink-0" viewBox="0 0 24 24">
+              <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
+            </svg>
+            <span>Estrada Professor Leandro Farias Sarzedas</span>
+          </div>
+          <span>Cantagalo Rio das Ostras - RJ</span>
+        </div>
+        
+        <div className="flex items-center justify-center gap-1.5 text-xs text-gray-300">
+          <svg className="w-3.5 h-3.5 fill-gray-300 flex-shrink-0" viewBox="0 0 24 24">
+            <path d="M6.62 10.79c1.44 2.83 3.76 5.14 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z"/>
+          </svg>
+          <span>(22) 99913-1594</span>
+        </div>
+        
+        <div className="w-full max-w-xs h-px bg-white/20 my-1"></div>
+        
+        <p className="text-xs text-gray-300">
+          © 2025 – Todos os direitos reservados
+        </p>
       </div>
-      <span className="block">Cantagalo - RJ, Brasil</span>
-    </div>
-
-    {/* Contato */}
-    <div className="text-[10px] sm:text-xs text-gray-300 space-y-0.5 mt-1 sm:mt-2">
-      <div className="flex items-center justify-center gap-1 sm:gap-1.5">
-        <svg className="w-3 h-3 sm:w-3.5 sm:h-3.5 fill-gray-300 flex-shrink-0" viewBox="0 0 24 24">
-          <path d="M6.62 10.79a15.05 15.05 0 006.59 6.59l2.2-2.2a1 1 0 011.11-.21c1.2.48 2.5.74 3.85.74a1 1 0 011 1v3.5a1 1 0 01-1 1C10.75 21 3 13.25 3 4a1 1 0 011-1h3.5a1 1 0 011 1c0 1.35.26 2.65.74 3.85a1 1 0 01-.21 1.11l-2.2 2.2z"/>
-        </svg>
-        <span>Telefone: (22) 99999-9999</span>
-      </div>
-
-      <div className="flex items-center justify-center gap-1 sm:gap-1.5">
-        <svg className="w-3 h-3 sm:w-3.5 sm:h-3.5 fill-gray-300 flex-shrink-0" viewBox="0 0 24 24">
-          <path d="M20 4H4a2 2 0 00-2 2v12a2 2 0 002 2h16a2 2 0 002-2V6a2 2 0 00-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/>
-        </svg>
-        <span>Email: contato@facilmaterial.com.br</span>
-      </div>
-    </div>
-
-    {/* Redes sociais */}
-    <div className="flex items-center justify-center gap-3 mt-2 sm:mt-3">
-      <a href="https://www.facebook.com" target="_blank" rel="noopener noreferrer" className="text-gray-300 hover:text-white">
-        <svg className="w-4 h-4 sm:w-5 sm:h-5 fill-current" viewBox="0 0 24 24">
-          <path d="M22 12a10 10 0 10-11.63 9.88v-6.99h-2.5v-2.89h2.5V9.41c0-2.46 1.46-3.82 3.69-3.82 1.07 0 2.18.19 2.18.19v2.4h-1.23c-1.21 0-1.59.76-1.59 1.53v1.84h2.71l-.43 2.89h-2.28v6.99A10 10 0 0022 12"/>
-        </svg>
-      </a>
-      <a href="https://www.instagram.com" target="_blank" rel="noopener noreferrer" className="text-gray-300 hover:text-white">
-        <svg className="w-4 h-4 sm:w-5 sm:h-5 fill-current" viewBox="0 0 24 24">
-          <path d="M12 2.16c3.2 0 3.584.012 4.85.07 1.17.056 1.96.24 2.42.4a4.92 4.92 0 011.78 1.05 4.92 4.92 0 011.05 1.78c.16.46.345 1.25.4 2.42.058 1.27.07 1.65.07 4.85s-.012 3.584-.07 4.85c-.056 1.17-.24 1.96-.4 2.42a4.92 4.92 0 01-1.05 1.78 4.92 4.92 0 01-1.78 1.05c-.46.16-1.25.345-2.42.4-1.27.058-1.65.07-4.85.07s-3.584-.012-4.85-.07c-1.17-.056-1.96-.24-2.42-.4a4.92 4.92 0 01-1.78-1.05 4.92 4.92 0 01-1.05-1.78c-.16-.46-.345-1.25-.4-2.42-.058-1.27-.07-1.65-.07-4.85s.012-3.584.07-4.85c.056-1.17.24-1.96.4-2.42a4.92 4.92 0 011.05-1.78 4.92 4.92 0 011.78-1.05c.46-.16 1.25-.345 2.42-.4 1.27-.058 1.65-.07 4.85-.07zm0-2.16C8.736 0 8.332.012 7.053.07 5.77.128 4.675.316 3.78.62a7.084 7.084 0 00-2.54 1.64 7.084 7.084 0 00-1.64 2.54C-.316 6.675-.128 7.77-.07 9.053-.012 10.332 0 10.736 0 12c0 1.264-.012 1.668-.07 2.947-.058 1.283-.246 2.378-.55 3.273a7.084 7.084 0 00-1.64 2.54 7.084 7.084 0 001.64 2.54c.895.304 1.99.492 3.273.55 1.279.058 1.683.07 2.947.07s1.668-.012 2.947-.07c1.283-.058 2.378-.246 3.273-.55a7.084 7.084 0 002.54-1.64 7.084 7.084 0 001.64-2.54c.304-.895.492-1.99.55-3.273.058-1.279.07-1.683.07-2.947s-.012-1.668-.07-2.947c-.058-1.283-.246-2.378-.55-3.273a7.084 7.084 0 00-1.64-2.54 7.084 7.084 0 00-2.54-1.64c-.895-.304-1.99-.492-3.273-.55C13.668.012 13.264 0 12 0z"/>
-          <circle cx="12" cy="12" r="3.2"/>
-        </svg>
-      </a>
-    </div>
-
-    {/* Copyright */}
-    <span className="text-[9px] sm:text-[10px] text-gray-400 mt-2 sm:mt-3 block">
-      © {new Date().getFullYear()} Fácil Material de Construção. Todos os direitos reservados.
-    </span>
-
-  </div>
-</footer>
+    </footer>
     </div>
   )
 }
