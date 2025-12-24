@@ -134,8 +134,7 @@ export default function Home() {
     if (data && (data.status === 'pago' || data.status === 'approved')) {
       console.log('✅ PAGAMENTO CONFIRMADO!')
       setStatusPagamento('aprovado')
-      enviarPedidoPorEmail()
-        clearInterval(intervalo)
+      clearInterval(intervalo)
       }
     }, 5000)
 
@@ -186,41 +185,6 @@ export default function Home() {
   const removerItem = (id: number) => {
     setCarrinho(carrinho.filter(item => item.id !== id))
   }
-
-const enviarPedidoPorEmail = async () => {
-  if (!vendaId) return
-
-  try {
-    const { gerarPedidoPDF, pdfParaBase64 } = await import('@/lib/gerarPedidoPDF')
-
-    const pdf = gerarPedidoPDF({
-      pedidoId: `#${String(vendaId).padStart(6, '0')}`,
-      data: new Date().toLocaleDateString('pt-BR'),
-      cliente: dadosCliente,
-      itens: carrinho,
-      subtotal,
-      taxaEntrega: TAXA_ENTREGA,
-      total
-    })
-
-    const pdfBase64 = pdfParaBase64(pdf)
-
-    await fetch('/api/enviar-pedido', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        pedidoId: `#${String(vendaId).padStart(6, '0')}`,
-        nomeCliente: dadosCliente.nome,
-        pdfBase64
-      })
-    })
-
-    console.log('✅ Pedido enviado por email')
-
-  } catch (error) {
-    console.error('❌ Erro ao enviar pedido por email:', error)
-  }
-}
 
 
   const gerarPix = async () => {
