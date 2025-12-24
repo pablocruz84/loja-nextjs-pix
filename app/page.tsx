@@ -71,7 +71,7 @@ export default function Home() {
   const [statusPagamento, setStatusPagamento] =
     useState<'pendente' | 'aprovado'>('pendente')
 
-  const TAXA_ENTREGA = 10
+  const TAXA_ENTREGA = 0
 
   // =========================
   // CÁLCULOS
@@ -797,16 +797,16 @@ export default function Home() {
 
               {/* PRODUTOS */}
               <div>
-                <h3 className="font-bold text-base sm:text-lg mb-2">Produtos</h3>
+                <h3 className="font-bold text-sm sm:text-sm mb-2">Produtos</h3>
                 {carrinho.map((item, index) => (
-                <div className="flex justify-between items-start gap-3">
-                  <div className="flex-1 min-w-0">
-                    <span className="font-semibold">{item.qtd}x</span> {item.nome}
+                  <div className="flex justify-between items-start gap-3 py-1.5 sm:py-2 text-sm text-gray-700" key={index}>
+                    <div className="flex-1 min-w-0">
+                      <span className="font-semibold">{item.qtd}x</span> {item.nome}
+                    </div>
+                    <div className="flex-shrink-0 font-semibold whitespace-nowrap ml-2">
+                      R$ {(item.preco * item.qtd).toFixed(2)}
+                    </div>
                   </div>
-                  <div className="flex-shrink-0 font-bold whitespace-nowrap ml-2">
-                    R$ {(item.preco * item.qtd).toFixed(2)}
-                  </div>
-                </div>
                 ))}
                 
                 {/* SUBTOTAL */}
