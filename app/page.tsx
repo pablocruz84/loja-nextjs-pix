@@ -675,6 +675,7 @@ export default function Home() {
                   <path d="M9 16.2L4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4L9 16.2z"/>
                 </svg>
               </div>
+              </div>
             </div>
             <h2 className="text-xl sm:text-2xl font-bold text-gray-800 flex items-center justify-center mx-auto mb-4 sm:mb-6">Confirme seu Pedido</h2>
 
@@ -683,45 +684,48 @@ export default function Home() {
               <h3 className="font-bold text-sm sm:text-base text-gray-800 mb-2 sm:mb-3 flex items-center gap-2">
                 📦 Produtos
               </h3>
-              {carrinho.map(item => (
-<div className="flex justify-between items-start gap-3 py-2">
-  <div className="flex-1 min-w-0">
-    <span className="font-semibold">{item.qtd}x</span> {item.nome}
-  </div>
-  <div className="flex-shrink-0 font-bold whitespace-nowrap ml-2">
-    R$ {(item.qtd * item.preco).toFixed(2)}
-  </div>
-</div>
-              ))}
+
+            {carrinho.map(item => (
+              <div className="flex justify-between items-start gap-3 py-2 text-sm text-gray-700">
+                <div className="flex-1 min-w-0">
+                  {item.qtd} x {item.nome}
+                </div>
+                <div className="flex-shrink-0 whitespace-nowrap ml-2">
+                  R$ {(item.qtd * item.preco).toFixed(2)}
+                </div>
+              </div>
+            ))}
+
+
               
               {/* SUBTOTAL */}
-              <div className="border-t pt-1.5 sm:pt-2 mt-1.5 sm:mt-2 flex justify-between items-center text-xs sm:text-sm text-gray-700">
-                <span>Subtotal:</span>
-                <span className="font-semibold">R$ {subtotal.toFixed(2)}</span>
+              <div className="border-t pt-1.5 sm:pt-2 mt-1.5 sm:mt-2 flex justify-between items-center text-sm text-gray-700">
+                <span className="font-semibold">Subtotal:</span>
+                <span className="font-semibold whitespace-nowrap">R$ {subtotal.toFixed(2)}</span>
               </div>
+
               
               {/* TAXA DE ENTREGA */}
-              <div className="flex justify-between items-center py-1.5 sm:py-2 text-xs sm:text-sm text-gray-700">
+              <div className="flex justify-between items-center py-1.5 sm:py-2 text-sm text-gray-700">
                 <span>Taxa de Entrega:</span>
                 <span className="font-semibold">R$ {TAXA_ENTREGA.toFixed(2)}</span>
               </div>
               
-              {/* LINHA DIVISÓRIA */}
-              <div className="border-t border-gray-300 my-1.5 sm:my-2"></div>
-              
               {/* TOTAL */}
-              <div className="flex justify-between items-center">
-                <span className="font-bold text-base sm:text-lg">Total:</span>
-                <span className="text-xl sm:text-2xl font-bold text-orange-500">R$ {total.toFixed(2)}</span>
+              <div className="border-t border-gray-300 mt-1.5 sm:mt-2 flex justify-between items-center text-sm font-bold py-2 sm:py-3">
+                <span>Total:</span>
+                <span className="text-orange-500 whitespace-nowrap">R$ {total.toFixed(2)}</span>
               </div>
-            </div>
+
+
+
 
             {/* ENTREGA */}
             <div className="bg-blue-50 rounded-lg p-3 sm:p-4 mb-4 sm:mb-6">
               <h3 className="font-bold text-sm sm:text-base text-gray-800 mb-2 sm:mb-3 flex items-center gap-2">
                 🏠 Entrega
               </h3>
-              <div className="text-xs sm:text-sm text-gray-700 space-y-0.5 sm:space-y-1">
+              <div className="text-sm text-gray-700 space-y-0.5 sm:space-y-1">
                 <p><strong>Nome:</strong> {dadosCliente.nome}</p>
                 <p><strong>CPF:</strong> {dadosCliente.cpf}</p>
                 <p><strong>Telefone:</strong> {dadosCliente.telefone}</p>
@@ -732,6 +736,7 @@ export default function Home() {
                   <p><strong>Ponto de Ref.:</strong> {dadosCliente.pontoReferencia}</p>
                 )}
               </div>
+
               <div>
                 <p><strong>Entrega será realizada em até 1 dia útil</strong> </p>
               </div>
@@ -794,14 +799,14 @@ export default function Home() {
               <div>
                 <h3 className="font-bold text-base sm:text-lg mb-2">Produtos</h3>
                 {carrinho.map((item, index) => (
-<div className="flex justify-between items-start gap-3">
-  <div className="flex-1 min-w-0">
-    <span className="font-semibold">{item.qtd}x</span> {item.nome}
-  </div>
-  <div className="flex-shrink-0 font-bold whitespace-nowrap ml-2">
-    R$ {(item.preco * item.qtd).toFixed(2)}
-  </div>
-</div>
+                <div className="flex justify-between items-start gap-3">
+                  <div className="flex-1 min-w-0">
+                    <span className="font-semibold">{item.qtd}x</span> {item.nome}
+                  </div>
+                  <div className="flex-shrink-0 font-bold whitespace-nowrap ml-2">
+                    R$ {(item.preco * item.qtd).toFixed(2)}
+                  </div>
+                </div>
                 ))}
                 
                 {/* SUBTOTAL */}
