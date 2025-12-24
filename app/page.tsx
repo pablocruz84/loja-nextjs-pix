@@ -71,7 +71,7 @@ export default function Home() {
   const [statusPagamento, setStatusPagamento] =
     useState<'pendente' | 'aprovado'>('pendente')
 
-  const TAXA_ENTREGA = 0
+  const TAXA_ENTREGA = 10
 
   // =========================
   // CÁLCULOS
@@ -727,6 +727,9 @@ export default function Home() {
                 {dadosCliente.pontoReferencia && (
                   <p><strong>Ponto de Ref.:</strong> {dadosCliente.pontoReferencia}</p>
                 )}
+              </div>
+              <div>
+                <p><strong>Entrega será realizada em até 1 dia útil</strong> </p>
               </div>
             </div>
 
