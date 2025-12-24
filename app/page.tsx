@@ -684,10 +684,14 @@ export default function Home() {
                 📦 Produtos
               </h3>
               {carrinho.map(item => (
-                <div key={item.id} className="flex justify-between items-center py-1.5 sm:py-2 text-xs sm:text-sm">
-                  <span className="text-gray-700">{item.qtd}x {item.nome}</span>
-                  <span className="font-semibold">R$ {(item.qtd * item.preco).toFixed(2)}</span>
-                </div>
+<div className="flex justify-between items-start gap-3 py-2">
+  <div className="flex-1 min-w-0">
+    <span className="font-semibold">{item.qtd}x</span> {item.nome}
+  </div>
+  <div className="flex-shrink-0 font-bold whitespace-nowrap ml-2">
+    R$ {(item.qtd * item.preco).toFixed(2)}
+  </div>
+</div>
               ))}
               
               {/* SUBTOTAL */}
@@ -790,10 +794,14 @@ export default function Home() {
               <div>
                 <h3 className="font-bold text-base sm:text-lg mb-2">Produtos</h3>
                 {carrinho.map((item, index) => (
-                  <div key={index} className="flex justify-between text-xs sm:text-sm border-b py-1.5 sm:py-2">
-                    <span>{item.qtd}x {item.nome}</span>
-                    <span className="font-semibold">R$ {(item.preco * item.qtd).toFixed(2)}</span>
-                  </div>
+<div className="flex justify-between items-start gap-3">
+  <div className="flex-1 min-w-0">
+    <span className="font-semibold">{item.qtd}x</span> {item.nome}
+  </div>
+  <div className="flex-shrink-0 font-bold whitespace-nowrap ml-2">
+    R$ {(item.preco * item.qtd).toFixed(2)}
+  </div>
+</div>
                 ))}
                 
                 {/* SUBTOTAL */}
