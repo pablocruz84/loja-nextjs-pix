@@ -1,4 +1,4 @@
-// app/api/webhook/route.ts - VERSÃO CORRIGIDA
+// app/api/webhook/route.ts - VERSÃO FINAL CORRIGIDA
 
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
@@ -52,7 +52,7 @@ export async function POST(request: NextRequest) {
     console.log('📦 Venda encontrada:', venda.id)
 
     // 🛑 Evita duplicidade
-    if (venda.status === 'pago') {
+    if (venda.status === 'pago') {  // ✅ CORRIGIDO - era 'approved'
       console.log('✅ Venda já foi marcada como paga')
       return NextResponse.json({ received: true })
     }
@@ -61,7 +61,7 @@ export async function POST(request: NextRequest) {
     const { error: updateError } = await supabase
       .from('vendas')
       .update({
-        status: 'pago',  // ✅ CORRETO - deve ser 'pago'
+        status: 'pago',
         data_pagamento: new Date().toISOString()
       })
       .eq('id', venda.id)
