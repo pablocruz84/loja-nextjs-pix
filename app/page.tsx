@@ -1,12 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import {
-  buscarProdutos,
-  buscarClientePorCPF,
-  criarCliente,
-  criarVenda
-} from '@/lib/supabase'
+import { buscarProdutos, buscarClientePorCPF, criarCliente, criarVenda, Produto as ProdutoDB, supabase } from '@/lib/supabase'
 
 // 🎭 FUNÇÕES DE MÁSCARA
 const formatarCPF = (valor: string) => {
@@ -114,27 +109,42 @@ export default function Home() {
     return () => clearTimeout(t)
   }, [mostrarToast])
 
-  // 🔄 POLLING PIX
+  // 🔄 POLLING: Verificar status do pagamento
   useEffect(() => {
     if (!vendaId || statusPagamento === 'aprovado') return
 
+    console.log('🔄 Iniciando polling para venda:', vendaId)
+
     const intervalo = setInterval(async () => {
-      const { createClient } = await import('@supabase/supabase-js')
-      const supabase = createClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-      )
+      try {
+        console.log('⏱️ Verificando status...')
 
-      const { data } = await supabase
-        .from('vendas')
-        .select('status')
-        .eq('id', vendaId)
-        .single()
+        const { data, error } = await supabase
+          .from('vendas')
+          .select('status, data_pagamento')
+          .eq('id', vendaId)
+          .single()
 
-    if (data && (data.status === 'pago' || data.status === 'approved')) {
-      console.log('✅ PAGAMENTO CONFIRMADO!')
-      setStatusPagamento('aprovado')
-      clearInterval(intervalo)
+        if (error) {
+          console.error('❌ Erro ao verificar status:', error)
+          return
+        }
+
+        console.log('🔍 Status atual:', data?.status)
+
+        if (data && data.status === 'pago') {
+          console.log('✅ PAGAMENTO CONFIRMADO!')
+          setStatusPagamento('aprovado')
+          
+          // Enviar email
+          enviarPedidoPorEmail().catch(err => {
+            console.error('❌ Erro ao enviar email:', err)
+          })
+          
+          clearInterval(intervalo)
+        }
+      } catch (error) {
+        console.error('❌ Erro no polling:', error)
       }
     }, 5000)
 
@@ -186,6 +196,50 @@ export default function Home() {
     setCarrinho(carrinho.filter(item => item.id !== id))
   }
 
+  // 📧 Função para enviar pedido por email
+  const enviarPedidoPorEmail = async () => {
+    if (!vendaId) return
+    
+    try {
+      console.log('📧 Enviando pedido por email...')
+      
+      const dados = {
+        pedidoId: `#${String(vendaId).padStart(6, '0')}`,
+        data: new Date().toLocaleDateString('pt-BR'),
+        cliente: dadosCliente,
+        itens: carrinho,
+        subtotal,
+        taxaEntrega: TAXA_ENTREGA,
+        total
+      }
+      
+      try {
+        const { gerarPedidoPDF, pdfParaBase64 } = await import('@/lib/gerarPedidoPDF')
+        const pdf = gerarPedidoPDF(dados)
+        const pdfBase64 = pdfParaBase64(pdf)
+        
+        const response = await fetch('/api/enviar-pedido', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            pedidoId: dados.pedidoId,
+            nomeCliente: dadosCliente.nome,
+            pdfBase64
+          })
+        })
+        
+        if (response.ok) {
+          console.log('✅ Email enviado com sucesso!')
+        } else {
+          console.warn('⚠️ Erro ao enviar email')
+        }
+      } catch (error) {
+        console.warn('⚠️ Erro ao gerar/enviar PDF:', error)
+      }
+    } catch (error) {
+      console.error('❌ Erro ao enviar email:', error)
+    }
+  }
 
   const gerarPix = async () => {
     setCarregandoPix(true)
