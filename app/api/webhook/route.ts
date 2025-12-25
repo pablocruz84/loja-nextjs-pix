@@ -1,6 +1,7 @@
+// app/api/webhook/route.ts - VERSÃO CORRIGIDA
+
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
-import { gerarPedidoPDF, pdfParaBase64 } from '@/lib/gerarPedidoPDF'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -14,6 +15,7 @@ export async function POST(request: NextRequest) {
 
     const paymentId = body?.data?.id || body?.id
     if (!paymentId) {
+      console.log('⚠️ Sem payment ID')
       return NextResponse.json({ received: true })
     }
 
@@ -31,13 +33,14 @@ export async function POST(request: NextRequest) {
     console.log('💳 Status do pagamento:', payment.status)
 
     if (payment.status !== 'approved') {
+      console.log('⏳ Pagamento não aprovado ainda')
       return NextResponse.json({ received: true })
     }
 
     // 🔎 Busca venda
     const { data: venda, error } = await supabase
       .from('vendas')
-      .select('*')
+      .select('*, clientes(*)')
       .eq('pix_id', String(paymentId))
       .single()
 
@@ -46,65 +49,51 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ received: true })
     }
 
+    console.log('📦 Venda encontrada:', venda.id)
+
     // 🛑 Evita duplicidade
-    if (venda.email_enviado) {
-      console.log('⚠️ Email já enviado')
+    if (venda.status === 'pago') {
+      console.log('✅ Venda já foi marcada como paga')
       return NextResponse.json({ received: true })
     }
 
-    // ✅ Atualiza venda
-    await supabase
+    // ✅ Atualiza venda para PAGO
+    const { error: updateError } = await supabase
       .from('vendas')
       .update({
-        status: 'approved',
+        status: 'pago',  // ✅ CORRETO - deve ser 'pago'
         data_pagamento: new Date().toISOString()
       })
       .eq('id', venda.id)
 
-    // 📄 Gera PDF
-    const pdf = gerarPedidoPDF({
-      pedidoId: `#${String(venda.id).padStart(6, '0')}`,
-      data: new Date().toLocaleDateString('pt-BR'),
-      cliente: venda.cliente,
-      itens: venda.itens,
-      subtotal: venda.subtotal,
-      taxaEntrega: venda.taxa_entrega,
-      total: venda.total
+    if (updateError) {
+      console.error('❌ Erro ao atualizar venda:', updateError)
+      return NextResponse.json({ received: true })
+    }
+
+    console.log('✅ Venda atualizada para PAGO:', venda.id)
+
+    // 📧 Email será enviado pelo polling no frontend
+    // Não precisa enviar aqui
+
+    return NextResponse.json({ 
+      received: true,
+      updated: true,
+      vendaId: venda.id
     })
-
-    const pdfBase64 = pdfParaBase64(pdf)
-
-    // 🌐 Descobre domínio automaticamente
-    const origin = request.nextUrl.origin
-
-    // 📧 Envia email
-    await fetch(`${origin}/api/enviar-pedido`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        pedidoId: `#${String(venda.id).padStart(6, '0')}`,
-        nomeCliente: venda.cliente.nome,
-        emailCliente: venda.cliente.email,
-        pdfBase64
-      })
-    })
-
-    // 🏁 Marca como enviado
-    await supabase
-      .from('vendas')
-      .update({ email_enviado: true })
-      .eq('id', venda.id)
-
-    console.log('✅ Venda aprovada e email enviado:', venda.id)
-
-    return NextResponse.json({ received: true })
 
   } catch (error: any) {
     console.error('❌ Erro no webhook:', error)
-    return NextResponse.json({ received: true })
+    return NextResponse.json({ 
+      received: true,
+      error: error.message 
+    })
   }
 }
 
 export async function GET() {
-  return NextResponse.json({ message: 'Webhook Mercado Pago ativo' })
+  return NextResponse.json({ 
+    message: 'Webhook Mercado Pago ativo',
+    timestamp: new Date().toISOString()
+  })
 }
