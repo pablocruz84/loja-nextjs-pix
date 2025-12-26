@@ -1,76 +1,89 @@
-// app/api/confirmar-pagamento/route.ts
-
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 
 export async function POST(request: NextRequest) {
   try {
-    const { vendaId } = await request.json()
+    const { paymentId, vendaId } = await request.json()
 
-    if (!vendaId) {
-      return NextResponse.json({ error: 'vendaId obrigatório' }, { status: 400 })
-    }
-
-    console.log('🧪 Confirmação manual de pagamento')
-    console.log('Venda ID:', vendaId)
-
-    // Criar cliente Supabase
-    const supabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!
-    )
-
-    // Buscar venda
-    const { data: venda, error: vendaError } = await supabase
-      .from('vendas')
-      .select('*')
-      .eq('id', vendaId)
-      .single()
-
-    if (vendaError || !venda) {
-      console.error('❌ Venda não encontrada:', vendaError)
-      return NextResponse.json({ error: 'Venda não encontrada' }, { status: 404 })
-    }
-
-    console.log('📦 Venda encontrada:', venda.id)
-    console.log('Status atual:', venda.status)
-
-    if (venda.status === 'pago') {
-      console.log('✅ Venda já está paga')
+    if (!paymentId || !vendaId) {
       return NextResponse.json({ 
-        success: true, 
-        message: 'Venda já está paga',
-        vendaId: venda.id 
+        success: false, 
+        error: 'paymentId e vendaId são obrigatórios' 
       })
     }
 
-    // Atualizar para pago
+    const mpToken = process.env.MERCADOPAGO_ACCESS_TOKEN
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+    const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+
+    if (!mpToken || !supabaseUrl || !supabaseKey) {
+      return NextResponse.json({ 
+        success: false, 
+        error: 'Configuração ausente' 
+      })
+    }
+
+    // Consultar status do pagamento no Mercado Pago
+    console.log('🔍 Verificando pagamento:', paymentId)
+    const mpResponse = await fetch(
+      `https://api.mercadopago.com/v1/payments/${paymentId}`,
+      {
+        headers: { Authorization: `Bearer ${mpToken}` }
+      }
+    )
+
+    if (!mpResponse.ok) {
+      return NextResponse.json({ 
+        success: false, 
+        error: 'Erro ao consultar Mercado Pago' 
+      })
+    }
+
+    const payment = await mpResponse.json()
+    console.log('💳 Status do pagamento:', payment.status)
+
+    // Se não foi aprovado ainda, retorna pendente
+    if (payment.status !== 'approved') {
+      return NextResponse.json({ 
+        success: true, 
+        status: 'pendente',
+        mpStatus: payment.status
+      })
+    }
+
+    // Pagamento APROVADO! Atualizar banco
+    console.log('✅ Pagamento aprovado! Atualizando banco...')
+    const supabase = createClient(supabaseUrl, supabaseKey)
+
     const { error: updateError } = await supabase
       .from('vendas')
       .update({
         status: 'pago',
-        data_pagamento: new Date().toISOString()
+        data_pagamento: new Date().toISOString(),
+        mp_payment_id: payment.id
       })
       .eq('id', vendaId)
 
     if (updateError) {
       console.error('❌ Erro ao atualizar:', updateError)
-      return NextResponse.json({ error: 'Erro ao atualizar venda' }, { status: 500 })
+      return NextResponse.json({ 
+        success: false, 
+        error: 'Erro ao atualizar banco' 
+      })
     }
 
-    console.log('✅ Venda atualizada para PAGO!')
-    console.log('🔔 Polling detectará em até 5 segundos')
-
+    console.log('✅ Venda atualizada com sucesso!')
     return NextResponse.json({ 
-      success: true,
-      message: 'Pagamento confirmado com sucesso',
-      vendaId: venda.id
+      success: true, 
+      status: 'pago',
+      vendaId
     })
 
   } catch (error: any) {
     console.error('❌ Erro:', error)
     return NextResponse.json({ 
+      success: false, 
       error: error.message 
-    }, { status: 500 })
+    })
   }
 }

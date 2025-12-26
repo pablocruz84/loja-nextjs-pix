@@ -138,9 +138,8 @@ export default function Home() {
     }
   }
 
-  // =========================
+ // =========================
   // EFFECTS
-  // =========================
   // =========================
   useEffect(() => {
     carregarProdutos()
@@ -161,30 +160,37 @@ export default function Home() {
     return () => clearTimeout(t)
   }, [mostrarToast])
 
-  // 🔄 POLLING: Verificar status do pagamento
+  // 🔄 POLLING: Verificar pagamento DIRETAMENTE no Mercado Pago
   useEffect(() => {
-    if (!vendaId || statusPagamento === 'aprovado') return
+    if (!vendaId || !pixGerado || statusPagamento === 'aprovado') return
 
-    console.log('🔄 Iniciando polling para venda:', vendaId)
+    console.log('🔄 Iniciando verificação de pagamento para venda:', vendaId)
+    console.log('💳 PIX ID:', pixGerado.id)
 
     const intervalo = setInterval(async () => {
       try {
-        console.log('⏱️ Verificando status...')
+        console.log('⏱️ Verificando pagamento no Mercado Pago...')
 
-        const { data, error } = await supabase
-          .from('vendas')
-          .select('status, data_pagamento')
-          .eq('id', vendaId)
-          .single()
+        // Consulta DIRETA no Mercado Pago
+        const response = await fetch('/api/verificar-pagamento', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            paymentId: pixGerado.id,
+            vendaId: vendaId
+          })
+        })
 
-        if (error) {
-          console.error('❌ Erro ao verificar status:', error)
+        const data = await response.json()
+        
+        if (!data.success) {
+          console.error('❌ Erro ao verificar:', data.error)
           return
         }
 
-        console.log('🔍 Status atual:', data?.status)
+        console.log('🔍 Status:', data.status)
 
-        if (data && data.status === 'pago') {
+        if (data.status === 'pago') {
           console.log('✅ PAGAMENTO CONFIRMADO!')
           setStatusPagamento('aprovado')
           
@@ -196,12 +202,12 @@ export default function Home() {
           clearInterval(intervalo)
         }
       } catch (error) {
-        console.error('❌ Erro no polling:', error)
+        console.error('❌ Erro ao verificar pagamento:', error)
       }
-    }, 5000)
+    }, 5000) // Verifica a cada 5 segundos
 
     return () => clearInterval(intervalo)
-  }, [vendaId, statusPagamento])
+  }, [vendaId, pixGerado, statusPagamento])
 
   // =========================
   // FUNÇÕES
@@ -259,6 +265,7 @@ export default function Home() {
       if (!cliente) cliente = await criarCliente(dadosCliente)
 
       // 2️⃣ SEGUNDO: Criar venda NO BANCO (status pendente)
+
       const venda = await criarVenda({
         cliente_id: cliente.id,
         produtos: carrinho,
