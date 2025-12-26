@@ -196,94 +196,39 @@ export default function Home() {
     setCarrinho(carrinho.filter(item => item.id !== id))
   }
 
-  // 📧 Função para enviar pedido por email
-  const enviarPedidoPorEmail = async () => {
-    if (!vendaId) return
-    
-    try {
-      console.log('📧 Enviando pedido por email...')
-      
-      const dados = {
-        pedidoId: `#${String(vendaId).padStart(6, '0')}`,
-        data: new Date().toLocaleDateString('pt-BR'),
-        cliente: dadosCliente,
-        itens: carrinho,
-        subtotal,
-        taxaEntrega: TAXA_ENTREGA,
-        total
-      }
-      
-      try {
-        const { gerarPedidoPDF, pdfParaBase64 } = await import('@/lib/gerarPedidoPDF')
-        const pdf = gerarPedidoPDF(dados)
-        const pdfBase64 = pdfParaBase64(pdf)
-        
-        const response = await fetch('/api/enviar-pedido', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            pedidoId: dados.pedidoId,
-            nomeCliente: dadosCliente.nome,
-            pdfBase64
-          })
-        })
-        
-        if (response.ok) {
-          console.log('✅ Email enviado com sucesso!')
-        } else {
-          console.warn('⚠️ Erro ao enviar email')
-        }
-      } catch (error) {
-        console.warn('⚠️ Erro ao gerar/enviar PDF:', error)
-      }
-    } catch (error) {
-      console.error('❌ Erro ao enviar email:', error)
-    }
-  }
 
   const gerarPix = async () => {
-  setCarregandoPix(true)
-  setEtapa(5)
+    setCarregandoPix(true)
+    setEtapa(5)
 
-  try {
-    let cliente = await buscarClientePorCPF(dadosCliente.cpf)
-    if (!cliente) cliente = await criarCliente(dadosCliente)
+    try {
+      let cliente = await buscarClientePorCPF(dadosCliente.cpf)
+      if (!cliente) cliente = await criarCliente(dadosCliente)
 
-    // 🔧 CORREÇÃO: Usa URL absoluta
-    const apiUrl = typeof window !== 'undefined' 
-      ? `${window.location.origin}/api/mercadopago/pix`
-      : '/api/mercadopago/pix'
+      const response = await fetch('/api/mercadopago/pix', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ total, carrinho, dadosCliente })
+      })
 
-    const response = await fetch(apiUrl, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ total, carrinho, dadosCliente })
-    })
+      const pixData = await response.json()
 
-    if (!response.ok) {
-      throw new Error(`Erro HTTP: ${response.status}`)
+      const venda = await criarVenda({
+        cliente_id: cliente.id,
+        produtos: carrinho,
+        total,
+        status: 'pendente',
+        pix_id: pixData.id,
+        pix_qr_code: pixData.qr_code
+      })
+
+      setVendaId(venda.id)
+      setPixGerado(pixData)
+    } finally {
+      setCarregandoPix(false)
     }
-
-    const pixData = await response.json()
-
-    const venda = await criarVenda({
-      cliente_id: cliente.id,
-      produtos: carrinho,
-      total,
-      status: 'pendente',
-      pix_id: pixData.id,
-      pix_qr_code: pixData.qr_code
-    })
-
-    setVendaId(venda.id)
-    setPixGerado(pixData)
-  } catch (error) {
-    console.error('❌ Erro ao gerar PIX:', error)
-    alert('Erro ao gerar pagamento. Tente novamente.')
-  } finally {
-    setCarregandoPix(false)
   }
-}
+
 
   // Renderização das etapas
   const renderSteps = () => (
