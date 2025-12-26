@@ -93,7 +93,7 @@ export default function Home() {
   // FUNÇÕES
   // =========================
   
-  // 📧 Função para enviar pedido por email
+  // 📧 Enviar pedido por email
   const enviarPedidoPorEmail = async () => {
     if (!vendaId) return
     
@@ -140,7 +140,6 @@ export default function Home() {
 
   // =========================
   // EFFECTS
-  // =========================
   // =========================
   useEffect(() => {
     carregarProdutos()
@@ -204,7 +203,7 @@ export default function Home() {
   }, [vendaId, statusPagamento])
 
   // =========================
-  // FUNÇÕES
+  // OUTRAS FUNÇÕES
   // =========================
   const carregarProdutos = async () => {
     try {
@@ -288,7 +287,6 @@ export default function Home() {
       setCarregandoPix(false)
     }
   }
-
 
   // Renderização das etapas
   const renderSteps = () => (
@@ -960,66 +958,14 @@ export default function Home() {
                     </div>
                   </div>
 
-                  {/* AGUARDANDO */}
-                  <div className="bg-yellow-100 border-l-4 border-yellow-500 rounded-lg p-3 sm:p-4 font-semibold text-xs sm:text-sm text-yellow-800 flex items-center gap-2 sm:gap-3">
-                    <div className="animate-spin rounded-full h-4 w-4 sm:h-5 sm:w-5 border-b-2 border-yellow-600" />
-                    <span>Aguardando confirmação do pagamento...</span>
+                  {/* PAGAMENTO CONFIRMADO */}
+                  <div className="bg-blue-50 border-l-4 border-blue-500 rounded-lg p-3 sm:p-4 font-semibold text-xs sm:text-sm text-blue-800 flex items-center gap-2 sm:gap-3">
+                    <svg className="w-5 h-5 text-blue-600" fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+                    </svg>
+                    <span>Pagamento confirmado! Aguardando processamento...</span>
                   </div>
                   
-                  {/* 🧪 BOTÃO DE CONFIRMAÇÃO MANUAL - DESENVOLVIMENTO */}
-                  {statusPagamento === 'pendente' && vendaId && (
-                    <div className="bg-purple-50 border-2 border-purple-300 rounded-lg p-4">
-                      <div className="flex items-center gap-2 mb-3">
-                        <span className="text-2xl">🧪</span>
-                        <h4 className="font-bold text-purple-800">Modo Desenvolvimento</h4>
-                      </div>
-                      
-                      <p className="text-sm text-purple-700 mb-3">
-                        Como o webhook só funciona com pagamentos reais, use este botão para simular a confirmação:
-                      </p>
-                      
-                      <button
-                        onClick={async () => {
-                          try {
-                            console.log('🧪 Confirmando pagamento manualmente...')
-                            
-                            const response = await fetch('/api/confirmar-pagamento', {
-                              method: 'POST',
-                              headers: { 'Content-Type': 'application/json' },
-                              body: JSON.stringify({ vendaId })
-                            })
-
-                            const result = await response.json()
-
-                            if (response.ok) {
-                              console.log('✅', result.message)
-                              alert('✅ Pagamento confirmado!\n\nO sistema detectará em até 5 segundos e enviará o email.')
-                            } else {
-                              console.error('❌', result.error)
-                              alert('❌ Erro: ' + result.error)
-                            }
-                          } catch (error: any) {
-                            console.error('❌ Erro:', error)
-                            alert('❌ Erro ao confirmar: ' + error.message)
-                          }
-                        }}
-                        className="w-full bg-purple-600 hover:bg-purple-700 text-white py-3 px-4 rounded-lg font-bold transition-colors flex items-center justify-center gap-2"
-                      >
-                        <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                          <path d="M9 16.2L4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4L9 16.2z"/>
-                        </svg>
-                        Confirmar Pagamento Manualmente
-                      </button>
-                      
-                      <div className="mt-3 text-xs text-purple-600 bg-purple-100 p-3 rounded">
-                        <p className="font-bold">ℹ️ Informações:</p>
-                        <p>• Venda ID: {vendaId}</p>
-                        <p>• Este botão simula o webhook do Mercado Pago</p>
-                        <p>• Em produção com pagamento real, será automático</p>
-                        <p className="text-red-600 font-bold mt-2">⚠️ Remover antes do deploy final!</p>
-                      </div>
-                    </div>
-                  )}
 
                   {/* COMO PROCEDER */}
                   <div className="bg-blue-100 border-l-4 border-blue-500 rounded-lg p-3 sm:p-4">
