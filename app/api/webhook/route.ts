@@ -10,20 +10,22 @@ export async function POST(request: NextRequest) {
     console.log(JSON.stringify(body, null, 2))
     console.log('═══════════════════════════════════════')
 
-    const paymentId = body?.data?.id
+    // 🔑 Mercado Pago pode mandar o ID em formatos diferentes
+    const paymentId = body?.data?.id || body?.id
+
     if (!paymentId) {
       console.log('⚠️ Webhook sem payment id')
       return NextResponse.json({ received: true })
     }
 
-    // 🔐 Variáveis de ambiente
-    if (
-      !process.env.MERCADOPAGO_ACCESS_TOKEN ||
-      !process.env.NEXT_PUBLIC_SUPABASE_URL ||
-      !process.env.SUPABASE_SERVICE_ROLE_KEY
-    ) {
+    // 🔐 Verificação de variáveis de ambiente
+    const mpToken = process.env.MERCADOPAGO_ACCESS_TOKEN
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+    const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+
+    if (!mpToken || !supabaseUrl || !supabaseKey) {
       console.error('❌ Variáveis de ambiente faltando')
-      return NextResponse.json({ received: true, error: 'env missing' })
+      return NextResponse.json({ received: true })
     }
 
     // 🔍 Buscar pagamento no Mercado Pago
@@ -31,58 +33,57 @@ export async function POST(request: NextRequest) {
       `https://api.mercadopago.com/v1/payments/${paymentId}`,
       {
         headers: {
-          Authorization: `Bearer ${process.env.MERCADOPAGO_ACCESS_TOKEN}`
+          Authorization: `Bearer ${mpToken}`
         }
       }
     )
 
     if (!mpResponse.ok) {
-      console.error('❌ Erro ao consultar pagamento MP')
+      console.error('❌ Erro ao consultar pagamento no Mercado Pago')
       return NextResponse.json({ received: true })
     }
 
     const payment = await mpResponse.json()
 
-    console.log('💳 PAGAMENTO:')
+    console.log('💳 PAGAMENTO CONSULTADO:')
     console.log('- ID:', payment.id)
     console.log('- STATUS:', payment.status)
     console.log('- EXTERNAL_REFERENCE:', payment.external_reference)
 
+    // ⏳ Ignora se não estiver aprovado
     if (payment.status !== 'approved') {
       console.log('⏳ Pagamento ainda não aprovado')
       return NextResponse.json({ received: true })
     }
 
     if (!payment.external_reference) {
-      console.error('❌ Pagamento sem external_reference')
+      console.error('❌ Pagamento aprovado sem external_reference')
       return NextResponse.json({ received: true })
     }
 
-    // 🔗 Conexão Supabase
-    const supabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL,
-      process.env.SUPABASE_SERVICE_ROLE_KEY
-    )
+    // 🔗 Conexão Supabase (SERVICE ROLE)
+    const supabase = createClient(supabaseUrl, supabaseKey)
 
-    // 🔎 Buscar venda PELO external_reference
-    const { data: venda, error } = await supabase
+    // 🔎 Buscar venda PELO external_reference (ID DA VENDA)
+    const { data: venda, error: vendaError } = await supabase
       .from('vendas')
       .select('*')
       .eq('id', payment.external_reference)
       .single()
 
-    if (error || !venda) {
-      console.error('❌ Venda não encontrada:', error)
+    if (vendaError || !venda) {
+      console.error('❌ Venda não encontrada:', vendaError)
       return NextResponse.json({ received: true })
     }
 
+    // 🛑 Evita duplicidade
     if (venda.status === 'pago') {
-      console.log('✅ Venda já estava paga')
-      return NextResponse.json({ received: true })
+      console.log('✅ Venda já estava marcada como paga')
+      return NextResponse.json({ received: true, alreadyPaid: true })
     }
 
-    // ✅ Atualizar venda
-    await supabase
+    // ✅ Atualizar venda para PAGO
+    const { error: updateError } = await supabase
       .from('vendas')
       .update({
         status: 'pago',
@@ -91,13 +92,26 @@ export async function POST(request: NextRequest) {
       })
       .eq('id', venda.id)
 
-    console.log('✅ Venda atualizada para PAGO:', venda.id)
+    if (updateError) {
+      console.error('❌ Erro ao atualizar venda:', updateError)
+      return NextResponse.json({ received: true })
+    }
+
+    console.log('✅ VENDA ATUALIZADA COM SUCESSO:', venda.id)
     console.log('═══════════════════════════════════════')
 
-    return NextResponse.json({ received: true, updated: true })
+    return NextResponse.json({
+      received: true,
+      updated: true,
+      vendaId: venda.id
+    })
 
   } catch (error: any) {
-    console.error('❌ ERRO NO WEBHOOK:', error)
+    console.error('═══════════════════════════════════════')
+    console.error('❌ ERRO FATAL NO WEBHOOK')
+    console.error(error)
+    console.error('═══════════════════════════════════════')
+
     return NextResponse.json({ received: true })
   }
 }
