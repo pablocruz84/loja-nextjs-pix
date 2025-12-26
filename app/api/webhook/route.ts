@@ -4,43 +4,30 @@ import { createClient } from '@supabase/supabase-js'
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    
+
     console.log('═══════════════════════════════════════')
-    console.log('📩 WEBHOOK RECEBIDO')
-    console.log('Body completo:', JSON.stringify(body, null, 2))
+    console.log('📩 WEBHOOK MERCADO PAGO RECEBIDO')
+    console.log(JSON.stringify(body, null, 2))
     console.log('═══════════════════════════════════════')
 
-    const paymentId = body?.data?.id || body?.id
-    
+    const paymentId = body?.data?.id
     if (!paymentId) {
-      console.log('⚠️ Sem payment ID no body')
-      return NextResponse.json({ received: true, error: 'No payment ID' })
+      console.log('⚠️ Webhook sem payment id')
+      return NextResponse.json({ received: true })
     }
 
-    console.log('💳 Payment ID encontrado:', paymentId)
-
-    // Verificar variáveis de ambiente
-    const hasToken = !!process.env.MERCADOPAGO_ACCESS_TOKEN
-    const hasSupabaseUrl = !!process.env.NEXT_PUBLIC_SUPABASE_URL
-    const hasSupabaseKey = !!process.env.SUPABASE_SERVICE_ROLE_KEY
-    
-    console.log('🔐 Variáveis de ambiente:')
-    console.log('- MERCADOPAGO_ACCESS_TOKEN:', hasToken ? '✅' : '❌')
-    console.log('- NEXT_PUBLIC_SUPABASE_URL:', hasSupabaseUrl ? '✅' : '❌')
-    console.log('- SUPABASE_SERVICE_ROLE_KEY:', hasSupabaseKey ? '✅' : '❌')
-
-    if (!hasToken || !hasSupabaseUrl || !hasSupabaseKey) {
-      console.error('❌ Variáveis de ambiente faltando!')
-      return NextResponse.json({ 
-        received: true, 
-        error: 'Missing environment variables' 
-      })
+    // 🔐 Variáveis de ambiente
+    if (
+      !process.env.MERCADOPAGO_ACCESS_TOKEN ||
+      !process.env.NEXT_PUBLIC_SUPABASE_URL ||
+      !process.env.SUPABASE_SERVICE_ROLE_KEY
+    ) {
+      console.error('❌ Variáveis de ambiente faltando')
+      return NextResponse.json({ received: true, error: 'env missing' })
     }
 
-    // 🔍 Consulta pagamento no Mercado Pago
-    console.log('🔍 Consultando pagamento no Mercado Pago...')
-    
-    const paymentResponse = await fetch(
+    // 🔍 Buscar pagamento no Mercado Pago
+    const mpResponse = await fetch(
       `https://api.mercadopago.com/v1/payments/${paymentId}`,
       {
         headers: {
@@ -49,139 +36,75 @@ export async function POST(request: NextRequest) {
       }
     )
 
-    if (!paymentResponse.ok) {
-      console.error('❌ Erro ao consultar Mercado Pago:', paymentResponse.status)
-      const errorText = await paymentResponse.text()
-      console.error('Resposta:', errorText)
-      return NextResponse.json({ received: true, error: 'MP API error' })
+    if (!mpResponse.ok) {
+      console.error('❌ Erro ao consultar pagamento MP')
+      return NextResponse.json({ received: true })
     }
 
-    const payment = await paymentResponse.json()
-    console.log('💳 Dados do pagamento:')
+    const payment = await mpResponse.json()
+
+    console.log('💳 PAGAMENTO:')
     console.log('- ID:', payment.id)
-    console.log('- Status:', payment.status)
-    console.log('- Transaction amount:', payment.transaction_amount)
+    console.log('- STATUS:', payment.status)
+    console.log('- EXTERNAL_REFERENCE:', payment.external_reference)
 
     if (payment.status !== 'approved') {
-      console.log('⏳ Pagamento não aprovado ainda, ignorando...')
-      return NextResponse.json({ received: true, status: payment.status })
+      console.log('⏳ Pagamento ainda não aprovado')
+      return NextResponse.json({ received: true })
     }
 
-    console.log('✅ Pagamento aprovado! Buscando venda no banco...')
+    if (!payment.external_reference) {
+      console.error('❌ Pagamento sem external_reference')
+      return NextResponse.json({ received: true })
+    }
 
-    // Criar cliente Supabase com SERVICE ROLE KEY
+    // 🔗 Conexão Supabase
     const supabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!
+      process.env.NEXT_PUBLIC_SUPABASE_URL,
+      process.env.SUPABASE_SERVICE_ROLE_KEY
     )
 
-    // 🔎 Busca venda
-    console.log('🔎 Buscando venda com pix_id:', String(paymentId))
-    
-    const { data: venda, error: vendaError } = await supabase
+    // 🔎 Buscar venda PELO external_reference
+    const { data: venda, error } = await supabase
       .from('vendas')
       .select('*')
-      .eq('pix_id', String(paymentId))
+      .eq('id', payment.external_reference)
       .single()
 
-    if (vendaError) {
-      console.error('❌ Erro ao buscar venda:', vendaError)
-      console.error('- Code:', vendaError.code)
-      console.error('- Message:', vendaError.message)
-      console.error('- Details:', vendaError.details)
-      return NextResponse.json({ 
-        received: true, 
-        error: 'Venda não encontrada',
-        errorDetails: vendaError 
-      })
+    if (error || !venda) {
+      console.error('❌ Venda não encontrada:', error)
+      return NextResponse.json({ received: true })
     }
 
-    if (!venda) {
-      console.error('❌ Venda não encontrada para pix_id:', paymentId)
-      return NextResponse.json({ 
-        received: true, 
-        error: 'Venda não existe' 
-      })
-    }
-
-    console.log('📦 Venda encontrada:')
-    console.log('- ID:', venda.id)
-    console.log('- Status atual:', venda.status)
-    console.log('- Total:', venda.total)
-
-    // 🛑 Evita duplicidade
     if (venda.status === 'pago') {
-      console.log('✅ Venda já está marcada como paga, ignorando...')
-      return NextResponse.json({ 
-        received: true, 
-        alreadyPaid: true,
-        vendaId: venda.id 
-      })
+      console.log('✅ Venda já estava paga')
+      return NextResponse.json({ received: true })
     }
 
-    // ✅ Atualiza venda para PAGO
-    console.log('💾 Atualizando venda para PAGO...')
-    
-    const { data: vendaAtualizada, error: updateError } = await supabase
+    // ✅ Atualizar venda
+    await supabase
       .from('vendas')
       .update({
         status: 'pago',
-        data_pagamento: new Date().toISOString()
+        data_pagamento: new Date().toISOString(),
+        mp_payment_id: payment.id
       })
       .eq('id', venda.id)
-      .select()
 
-    if (updateError) {
-      console.error('❌ Erro ao atualizar venda:', updateError)
-      console.error('- Code:', updateError.code)
-      console.error('- Message:', updateError.message)
-      console.error('- Details:', updateError.details)
-      return NextResponse.json({ 
-        received: true, 
-        error: 'Erro ao atualizar',
-        errorDetails: updateError 
-      })
-    }
-
-    console.log('✅ Venda atualizada com sucesso!')
-    console.log('Dados atualizados:', vendaAtualizada)
+    console.log('✅ Venda atualizada para PAGO:', venda.id)
     console.log('═══════════════════════════════════════')
 
-    return NextResponse.json({ 
-      received: true,
-      updated: true,
-      vendaId: venda.id,
-      newStatus: 'pago'
-    })
+    return NextResponse.json({ received: true, updated: true })
 
   } catch (error: any) {
-    console.error('═══════════════════════════════════════')
-    console.error('❌ ERRO FATAL NO WEBHOOK')
-    console.error('Tipo:', error.constructor.name)
-    console.error('Mensagem:', error.message)
-    console.error('Stack:', error.stack)
-    console.error('═══════════════════════════════════════')
-    
-    return NextResponse.json({ 
-      received: true,
-      error: error.message,
-      errorType: error.constructor.name
-    })
+    console.error('❌ ERRO NO WEBHOOK:', error)
+    return NextResponse.json({ received: true })
   }
 }
 
 export async function GET() {
-  const hasToken = !!process.env.MERCADOPAGO_ACCESS_TOKEN
-  const hasSupabaseUrl = !!process.env.NEXT_PUBLIC_SUPABASE_URL
-  const hasSupabaseKey = !!process.env.SUPABASE_SERVICE_ROLE_KEY
-
-  return NextResponse.json({ 
-    message: 'Webhook Mercado Pago ativo',
-    timestamp: new Date().toISOString(),
-    environment: {
-      MERCADOPAGO_ACCESS_TOKEN: hasToken ? 'Configurado ✅' : 'Faltando ❌',
-      NEXT_PUBLIC_SUPABASE_URL: hasSupabaseUrl ? 'Configurado ✅' : 'Faltando ❌',
-      SUPABASE_SERVICE_ROLE_KEY: hasSupabaseKey ? 'Configurado ✅' : 'Faltando ❌'
-    }
+  return NextResponse.json({
+    status: 'Webhook Mercado Pago ativo',
+    time: new Date().toISOString()
   })
 }
