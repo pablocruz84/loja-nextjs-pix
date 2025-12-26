@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { buscarProdutos, buscarClientePorCPF, criarCliente, criarVenda, Produto as ProdutoDB, supabase } from '@/lib/supabase'
+import { buscarProdutos, criarVenda, buscarClientePorCPF, criarCliente, incrementarComprasCliente, Produto as ProdutoDB, supabase } from '@/lib/supabase'
 
 // 🎭 FUNÇÕES DE MÁSCARA
 const formatarCPF = (valor: string) => {
@@ -242,36 +242,57 @@ export default function Home() {
   }
 
   const gerarPix = async () => {
-    setCarregandoPix(true)
-    setEtapa(5)
+      setCarregandoPix(true)
+      setEtapa(5)
 
-    try {
-      let cliente = await buscarClientePorCPF(dadosCliente.cpf)
-      if (!cliente) cliente = await criarCliente(dadosCliente)
+      try {
+        // 1. Buscar ou criar cliente
+        let cliente = await buscarClientePorCPF(dadosCliente.cpf)
+        if (!cliente) {
+          cliente = await criarCliente(dadosCliente)
+        }
 
-      const response = await fetch('/api/mercadopago/pix', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ total, carrinho, dadosCliente })
-      })
+        // 2. Gerar PIX no Mercado Pago
+        const response = await fetch('/api/mercadopago/pix', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ 
+            total, 
+            carrinho, 
+            dadosCliente 
+          })
+        })
 
-      const pixData = await response.json()
+        const pixData = await response.json()
 
-      const venda = await criarVenda({
-        cliente_id: cliente.id,
-        produtos: carrinho,
-        total,
-        status: 'pendente',
-        pix_id: pixData.id,
-        pix_qr_code: pixData.qr_code
-      })
+        if (!pixData.success) {
+          throw new Error('Erro ao gerar PIX')
+        }
 
-      setVendaId(venda.id)
-      setPixGerado(pixData)
-    } finally {
-      setCarregandoPix(false)
+        // 3. Criar venda no banco
+        const venda = await criarVenda({
+          cliente_id: cliente.id,
+          produtos: carrinho,
+          total,
+          status: 'pendente',
+          pix_id: pixData.id,
+          pix_qr_code: pixData.qr_code
+        })
+
+        // 4. Incrementar compras do cliente
+        await incrementarComprasCliente(cliente.id)
+
+        setVendaId(venda.id)
+        setPixGerado(pixData)
+        setCarregandoPix(false)
+
+      } catch (erro: any) {
+        console.error('❌ Erro:', erro)
+        alert('Erro ao gerar PIX: ' + erro.message)
+        setCarregandoPix(false)
+        setEtapa(3)
+      }
     }
-  }
 
 
   // Renderização das etapas

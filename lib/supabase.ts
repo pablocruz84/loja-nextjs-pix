@@ -1,8 +1,5 @@
 import { createClient } from '@supabase/supabase-js'
 
-
-
-// Configuração do Supabase
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 
@@ -43,7 +40,7 @@ export interface Cliente {
 export interface Venda {
   id: number
   cliente_id: number
-  produtos: any[] // Array de produtos
+  produtos: any[]
   total: number
   status: 'pendente' | 'pago' | 'cancelado'
   pix_id?: string
@@ -111,20 +108,35 @@ export async function buscarClientes() {
 }
 
 export async function buscarClientePorCPF(cpf: string) {
+  const cpfLimpo = cpf.replace(/\D/g, '')
+  
   const { data, error } = await supabase
     .from('clientes')
     .select('*')
-    .eq('cpf', cpf)
+    .eq('cpf', cpfLimpo)
     .single()
   
   if (error && error.code !== 'PGRST116') throw error
   return data as Cliente | null
 }
 
-export async function criarCliente(cliente: Omit<Cliente, 'id' | 'total_compras' | 'criado_em'>) {
+export async function criarCliente(clienteData: any) {
+  const cpfLimpo = clienteData.cpf.replace(/\D/g, '')
+  
   const { data, error } = await supabase
     .from('clientes')
-    .insert([cliente])
+    .insert([{
+      nome: clienteData.nome,
+      cpf: cpfLimpo,
+      telefone: clienteData.telefone,
+      rua: clienteData.rua,
+      numero: clienteData.numero,
+      bairro: clienteData.bairro,
+      cidade: clienteData.cidade,
+      estado: clienteData.estado,
+      ponto_referencia: clienteData.pontoReferencia || '',
+      total_compras: 0
+    }])
     .select()
   
   if (error) throw error
@@ -132,9 +144,18 @@ export async function criarCliente(cliente: Omit<Cliente, 'id' | 'total_compras'
 }
 
 export async function incrementarComprasCliente(clienteId: number) {
-  const { error } = await supabase.rpc('incrementar_compras', { cliente_id: clienteId })
+  const { data: cliente } = await supabase
+    .from('clientes')
+    .select('total_compras')
+    .eq('id', clienteId)
+    .single()
   
-  if (error) throw error
+  if (cliente) {
+    await supabase
+      .from('clientes')
+      .update({ total_compras: (cliente.total_compras || 0) + 1 })
+      .eq('id', clienteId)
+  }
 }
 
 // ================================================
@@ -186,7 +207,7 @@ export async function atualizarStatusVenda(vendaId: number, status: string, pixI
 }
 
 // ================================================
-// FUNÇÃO AUXILIAR PARA GERAR PRÓXIMO CÓDIGO
+// FUNÇÃO AUXILIAR
 // ================================================
 
 export async function gerarProximoCodigo() {
