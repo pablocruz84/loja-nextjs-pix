@@ -49,7 +49,7 @@ export default function Home() {
     bairro: 'Cantagalo',
     cidade: 'Rio das Ostras',
     estado: 'RJ',
-    pontoReferencia: ''
+    ponto_referencia: ''
   })
 
   const [produtos, setProdutos] = useState<Produto[]>([])
@@ -705,8 +705,8 @@ export default function Home() {
                 <div>
                   <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">Ponto de Referência</label>
                   <textarea
-                    value={dadosCliente.pontoReferencia}
-                    onChange={(e) => setDadosCliente({...dadosCliente, pontoReferencia: e.target.value})}
+                    value={dadosCliente.ponto_referencia}
+                    onChange={(e) => setDadosCliente({...dadosCliente, ponto_referencia: e.target.value})}
                     className="w-full px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 focus:outline-none resize-none"
                     rows={3}
                     placeholder="Ex: Próximo ao supermercado..."
@@ -802,8 +802,8 @@ export default function Home() {
                 <p><strong>Endereço:</strong> {dadosCliente.rua}, {dadosCliente.numero}</p>
                 <p><strong>Bairro:</strong> {dadosCliente.bairro}</p>
                 <p><strong>Cidade:</strong> {dadosCliente.cidade} - {dadosCliente.estado}</p>
-                {dadosCliente.pontoReferencia && (
-                  <p><strong>Ponto de Ref.:</strong> {dadosCliente.pontoReferencia}</p>
+                {dadosCliente.ponto_referencia && (
+                  <p><strong>Ponto de Ref.:</strong> {dadosCliente.ponto_referencia}</p>
                 )}
               </div>
 
