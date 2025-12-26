@@ -1,3 +1,8 @@
+// ═══════════════════════════════════════════════════════════════
+// ARQUIVO 2: app/api/mercadopago/pix/route.ts
+// ═══════════════════════════════════════════════════════════════
+// SUBSTITUA TODO O CONTEÚDO DO ARQUIVO POR ESTE:
+
 import { NextRequest, NextResponse } from 'next/server'
 import { randomUUID } from 'crypto'
 
@@ -5,7 +10,9 @@ export async function POST(request: NextRequest) {
   try {
     const { total, dadosCliente, carrinho, vendaId } = await request.json()
 
+    // Validação
     if (!total || !dadosCliente || !carrinho?.length || !vendaId) {
+      console.error('❌ Dados inválidos:', { total, dadosCliente, carrinho: carrinho?.length, vendaId })
       return NextResponse.json(
         { success: false, error: 'Dados inválidos para gerar PIX' },
         { status: 400 }

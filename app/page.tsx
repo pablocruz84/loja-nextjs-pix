@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { buscarProdutos, buscarClientePorCPF, criarCliente, criarVenda, atualizarStatusVenda, Produto as ProdutoDB, supabase } from '@/lib/supabase'
+import { buscarProdutos, buscarClientePorCPF, criarCliente, criarVenda, atualizarStatusVenda, Produto as ProdutoDB, supabase } from "@/lib/supabase"
 
 // 🎭 FUNÇÕES DE MÁSCARA
 const formatarCPF = (valor: string) => {
@@ -249,28 +249,34 @@ export default function Home() {
   }
 
 
+
   const gerarPix = async () => {
     setCarregandoPix(true)
     setEtapa(5)
 
     try {
       // 1️⃣ PRIMEIRO: Criar ou buscar cliente
+      console.log('1️⃣ Buscando/criando cliente...')
       let cliente = await buscarClientePorCPF(dadosCliente.cpf)
-      if (!cliente) cliente = await criarCliente(dadosCliente)
+      if (!cliente) {
+        console.log('Cliente não encontrado, criando novo...')
+        cliente = await criarCliente(dadosCliente)
+      }
+      console.log('✅ Cliente:', cliente.id)
 
-      // 2️⃣ SEGUNDO: Criar venda NO BANCO (status pendente)
+      // 2️⃣ SEGUNDO: Criar venda no banco (sem pix_id ainda)
+      console.log('2️⃣ Criando venda no banco...')
       const venda = await criarVenda({
         cliente_id: cliente.id,
         produtos: carrinho,
         total,
         status: 'pendente'
-        // Não inclua pix_id nem pix_qr_code
       })
-
       console.log('✅ Venda criada:', venda.id)
       setVendaId(venda.id)
 
       // 3️⃣ TERCEIRO: Gerar PIX no Mercado Pago COM vendaId
+      console.log('3️⃣ Gerando PIX no Mercado Pago...')
       const response = await fetch('/api/mercadopago/pix', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -278,7 +284,7 @@ export default function Home() {
           total, 
           carrinho, 
           dadosCliente,
-          vendaId: venda.id  // 🔥 CRITICAL: Envia o ID da venda
+          vendaId: venda.id
         })
       })
 
@@ -290,11 +296,12 @@ export default function Home() {
 
       console.log('✅ PIX gerado:', pixData.id)
 
-      // 4️⃣ QUARTO: Atualizar venda com dados do PIX
+      // 4️⃣ QUARTO: Atualizar venda com pix_id
+      console.log('4️⃣ Atualizando venda com dados do PIX...')
       await atualizarStatusVenda(venda.id, 'pendente', pixData.id)
+      console.log('✅ Venda atualizada com pix_id')
 
       setPixGerado(pixData)
-
     } catch (error: any) {
       console.error('❌ Erro ao gerar PIX:', error)
       alert('Erro ao gerar PIX: ' + error.message)
@@ -975,22 +982,11 @@ export default function Home() {
                     </div>
                   </div>
 
-                  {/* STATUS DO PAGAMENTO */}
-                  {statusPagamento === 'pendente' ? (
-                    /* AGUARDANDO - AMARELO */
-                    <div className="bg-yellow-100 border-l-4 border-yellow-500 rounded-lg p-3 sm:p-4 font-semibold text-xs sm:text-sm text-yellow-800 flex items-center gap-2 sm:gap-3">
-                      <div className="animate-spin rounded-full h-4 w-4 sm:h-5 sm:w-5 border-b-2 border-yellow-600" />
-                      <span>Aguardando confirmação do pagamento...</span>
-                    </div>
-                  ) : (
-                    /* CONFIRMADO - AZUL */
-                    <div className="bg-blue-100 border-l-4 border-blue-500 rounded-lg p-3 sm:p-4 font-semibold text-xs sm:text-sm text-blue-800 flex items-center gap-2 sm:gap-3">
-                      <svg className="w-5 h-5 sm:w-6 sm:h-6 text-blue-600 flex-shrink-0" fill="currentColor" viewBox="0 0 24 24">
-                        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
-                      </svg>
-                      <span>Pagamento confirmado!</span>
-                    </div>
-                  )}
+                  {/* AGUARDANDO */}
+                  <div className="bg-yellow-100 border-l-4 border-yellow-500 rounded-lg p-3 sm:p-4 font-semibold text-xs sm:text-sm text-yellow-800 flex items-center gap-2 sm:gap-3">
+                    <div className="animate-spin rounded-full h-4 w-4 sm:h-5 sm:w-5 border-b-2 border-yellow-600" />
+                    <span>Aguardando confirmação do pagamento...</span>
+                  </div>
                   
                   {/* COMO PROCEDER */}
                   <div className="bg-blue-100 border-l-4 border-blue-500 rounded-lg p-3 sm:p-4">
