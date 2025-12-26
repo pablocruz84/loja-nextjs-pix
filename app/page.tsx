@@ -88,7 +88,59 @@ export default function Home() {
       : produtos.filter(p => p.categoria === categoriaFiltro)
 
   // =========================
+
+  // =========================
+  // FUNÇÕES
+  // =========================
+  
+  // 📧 Função para enviar pedido por email
+  const enviarPedidoPorEmail = async () => {
+    if (!vendaId) return
+    
+    try {
+      console.log('📧 Enviando pedido por email...')
+      
+      const dados = {
+        pedidoId: `#${String(vendaId).padStart(6, '0')}`,
+        data: new Date().toLocaleDateString('pt-BR'),
+        cliente: dadosCliente,
+        itens: carrinho,
+        subtotal,
+        taxaEntrega: TAXA_ENTREGA,
+        total
+      }
+      
+      try {
+        const { gerarPedidoPDF, pdfParaBase64 } = await import('@/lib/gerarPedidoPDF')
+        const pdf = gerarPedidoPDF(dados)
+        const pdfBase64 = pdfParaBase64(pdf)
+        
+        const response = await fetch('/api/enviar-pedido', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            pedidoId: dados.pedidoId,
+            nomeCliente: dadosCliente.nome,
+            pdfBase64
+          })
+        })
+        
+        if (response.ok) {
+          console.log('✅ Email enviado com sucesso!')
+        } else {
+          console.warn('⚠️ Erro ao enviar email')
+        }
+      } catch (error) {
+        console.warn('⚠️ Erro ao gerar/enviar PDF:', error)
+      }
+    } catch (error) {
+      console.error('❌ Erro ao enviar email:', error)
+    }
+  }
+
+  // =========================
   // EFFECTS
+  // =========================
   // =========================
   useEffect(() => {
     carregarProdutos()
@@ -213,6 +265,10 @@ export default function Home() {
 
       const pixData = await response.json()
 
+      if (!response.ok || !pixData.success) {
+        throw new Error(pixData.error || 'Erro ao gerar PIX')
+      }
+
       const venda = await criarVenda({
         cliente_id: cliente.id,
         produtos: carrinho,
@@ -224,6 +280,10 @@ export default function Home() {
 
       setVendaId(venda.id)
       setPixGerado(pixData)
+    } catch (error: any) {
+      console.error('Erro ao gerar PIX:', error)
+      alert('Erro ao gerar PIX: ' + error.message)
+      setEtapa(4)
     } finally {
       setCarregandoPix(false)
     }
@@ -906,6 +966,60 @@ export default function Home() {
                     <span>Aguardando confirmação do pagamento...</span>
                   </div>
                   
+                  {/* 🧪 BOTÃO DE CONFIRMAÇÃO MANUAL - DESENVOLVIMENTO */}
+                  {statusPagamento === 'pendente' && vendaId && (
+                    <div className="bg-purple-50 border-2 border-purple-300 rounded-lg p-4">
+                      <div className="flex items-center gap-2 mb-3">
+                        <span className="text-2xl">🧪</span>
+                        <h4 className="font-bold text-purple-800">Modo Desenvolvimento</h4>
+                      </div>
+                      
+                      <p className="text-sm text-purple-700 mb-3">
+                        Como o webhook só funciona com pagamentos reais, use este botão para simular a confirmação:
+                      </p>
+                      
+                      <button
+                        onClick={async () => {
+                          try {
+                            console.log('🧪 Confirmando pagamento manualmente...')
+                            
+                            const response = await fetch('/api/confirmar-pagamento', {
+                              method: 'POST',
+                              headers: { 'Content-Type': 'application/json' },
+                              body: JSON.stringify({ vendaId })
+                            })
+
+                            const result = await response.json()
+
+                            if (response.ok) {
+                              console.log('✅', result.message)
+                              alert('✅ Pagamento confirmado!\n\nO sistema detectará em até 5 segundos e enviará o email.')
+                            } else {
+                              console.error('❌', result.error)
+                              alert('❌ Erro: ' + result.error)
+                            }
+                          } catch (error: any) {
+                            console.error('❌ Erro:', error)
+                            alert('❌ Erro ao confirmar: ' + error.message)
+                          }
+                        }}
+                        className="w-full bg-purple-600 hover:bg-purple-700 text-white py-3 px-4 rounded-lg font-bold transition-colors flex items-center justify-center gap-2"
+                      >
+                        <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                          <path d="M9 16.2L4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4L9 16.2z"/>
+                        </svg>
+                        Confirmar Pagamento Manualmente
+                      </button>
+                      
+                      <div className="mt-3 text-xs text-purple-600 bg-purple-100 p-3 rounded">
+                        <p className="font-bold">ℹ️ Informações:</p>
+                        <p>• Venda ID: {vendaId}</p>
+                        <p>• Este botão simula o webhook do Mercado Pago</p>
+                        <p>• Em produção com pagamento real, será automático</p>
+                        <p className="text-red-600 font-bold mt-2">⚠️ Remover antes do deploy final!</p>
+                      </div>
+                    </div>
+                  )}
 
                   {/* COMO PROCEDER */}
                   <div className="bg-blue-100 border-l-4 border-blue-500 rounded-lg p-3 sm:p-4">
