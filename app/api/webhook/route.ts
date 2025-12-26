@@ -61,6 +61,11 @@ export async function POST(request: NextRequest) {
     console.log('- STATUS:', payment.status)
     console.log('- EXTERNAL_REFERENCE:', payment.external_reference)
 
+
+    console.log('🔎 DEBUG external_reference:', payment.external_reference)
+    console.log('🔎 TIPO:', typeof payment.external_reference)
+
+
     // ⏳ Ainda não aprovado
     if (payment.status !== 'approved') {
       console.log('⏳ Pagamento ainda não aprovado')
