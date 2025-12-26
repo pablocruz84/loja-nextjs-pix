@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { buscarProdutos, buscarClientePorCPF, criarCliente, criarVenda, Produto as ProdutoDB, supabase } from '@/lib/supabase'
+import { buscarProdutos, buscarClientePorCPF, criarCliente, criarVenda, atualizarStatusVenda, Produto as ProdutoDB, supabase } from '@/lib/supabase'
 
 // 🎭 FUNÇÕES DE MÁSCARA
 const formatarCPF = (valor: string) => {
@@ -254,13 +254,32 @@ export default function Home() {
     setEtapa(5)
 
     try {
+      // 1️⃣ PRIMEIRO: Criar ou buscar cliente
       let cliente = await buscarClientePorCPF(dadosCliente.cpf)
       if (!cliente) cliente = await criarCliente(dadosCliente)
 
+      // 2️⃣ SEGUNDO: Criar venda NO BANCO (status pendente)
+      const venda = await criarVenda({
+        cliente_id: cliente.id,
+        produtos: carrinho,
+        total,
+        status: 'pendente'
+        // Não inclua pix_id nem pix_qr_code
+      })
+
+      console.log('✅ Venda criada:', venda.id)
+      setVendaId(venda.id)
+
+      // 3️⃣ TERCEIRO: Gerar PIX no Mercado Pago COM vendaId
       const response = await fetch('/api/mercadopago/pix', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ total, carrinho, dadosCliente })
+        body: JSON.stringify({ 
+          total, 
+          carrinho, 
+          dadosCliente,
+          vendaId: venda.id  // 🔥 CRITICAL: Envia o ID da venda
+        })
       })
 
       const pixData = await response.json()
@@ -269,19 +288,15 @@ export default function Home() {
         throw new Error(pixData.error || 'Erro ao gerar PIX')
       }
 
-      const venda = await criarVenda({
-        cliente_id: cliente.id,
-        produtos: carrinho,
-        total,
-        status: 'pendente',
-        pix_id: pixData.id,
-        pix_qr_code: pixData.qr_code
-      })
+      console.log('✅ PIX gerado:', pixData.id)
 
-      setVendaId(venda.id)
+      // 4️⃣ QUARTO: Atualizar venda com dados do PIX
+      await atualizarStatusVenda(venda.id, 'pendente', pixData.id)
+
       setPixGerado(pixData)
+
     } catch (error: any) {
-      console.error('Erro ao gerar PIX:', error)
+      console.error('❌ Erro ao gerar PIX:', error)
       alert('Erro ao gerar PIX: ' + error.message)
       setEtapa(4)
     } finally {

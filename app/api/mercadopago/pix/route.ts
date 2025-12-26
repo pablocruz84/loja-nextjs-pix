@@ -3,9 +3,9 @@ import { randomUUID } from 'crypto'
 
 export async function POST(request: NextRequest) {
   try {
-    const { total, dadosCliente, carrinho } = await request.json()
+    const { total, dadosCliente, carrinho, vendaId } = await request.json()
 
-    if (!total || !dadosCliente || !carrinho?.length) {
+    if (!total || !dadosCliente || !carrinho?.length || !vendaId) {
       return NextResponse.json(
         { success: false, error: 'Dados inválidos para gerar PIX' },
         { status: 400 }
@@ -30,6 +30,7 @@ export async function POST(request: NextRequest) {
     console.log('💰 PIX sendo gerado:')
     console.log('Valor:', valorArredondado)
     console.log('Cliente:', dadosCliente.nome)
+    console.log('Venda ID:', vendaId)
     console.log('Webhook:', `${baseUrl}/api/webhook`)
     console.log('═══════════════════════════════════════')
 
@@ -42,9 +43,10 @@ export async function POST(request: NextRequest) {
       },
       body: JSON.stringify({
         transaction_amount: valorArredondado,
-        description: `Pedido - ${carrinho.length} itens`,
+        description: `Pedido #${vendaId} - ${carrinho.length} itens`,
         payment_method_id: 'pix',
         notification_url: `${baseUrl}/api/webhook`,
+        external_reference: String(vendaId), // 🔥 CRITICAL: Link payment to sale
         payer: {
           email: dadosCliente.email || `${dadosCliente.nome.toLowerCase().replace(/\s/g, '')}@email.com`,
           first_name: dadosCliente.nome.split(' ')[0],
@@ -69,6 +71,7 @@ export async function POST(request: NextRequest) {
 
     console.log('✅ PIX gerado com sucesso!')
     console.log('ID do pagamento:', data.id)
+    console.log('External reference:', data.external_reference)
 
     return NextResponse.json({
       success: true,
