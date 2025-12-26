@@ -93,7 +93,7 @@ export default function Home() {
   // FUNÇÕES
   // =========================
   
-  // 📧 Enviar pedido por email
+  // 📧 Função para enviar pedido por email
   const enviarPedidoPorEmail = async () => {
     if (!vendaId) return
     
@@ -140,6 +140,7 @@ export default function Home() {
 
   // =========================
   // EFFECTS
+  // =========================
   // =========================
   useEffect(() => {
     carregarProdutos()
@@ -203,7 +204,7 @@ export default function Home() {
   }, [vendaId, statusPagamento])
 
   // =========================
-  // OUTRAS FUNÇÕES
+  // FUNÇÕES
   // =========================
   const carregarProdutos = async () => {
     try {
@@ -287,6 +288,7 @@ export default function Home() {
       setCarregandoPix(false)
     }
   }
+
 
   // Renderização das etapas
   const renderSteps = () => (
@@ -958,15 +960,12 @@ export default function Home() {
                     </div>
                   </div>
 
-                  {/* PAGAMENTO CONFIRMADO */}
-                  <div className="bg-blue-50 border-l-4 border-blue-500 rounded-lg p-3 sm:p-4 font-semibold text-xs sm:text-sm text-blue-800 flex items-center gap-2 sm:gap-3">
-                    <svg className="w-5 h-5 text-blue-600" fill="currentColor" viewBox="0 0 24 24">
-                      <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
-                    </svg>
-                    <span>Pagamento confirmado! Aguardando processamento...</span>
+                  {/* AGUARDANDO */}
+                  <div className="bg-yellow-100 border-l-4 border-yellow-500 rounded-lg p-3 sm:p-4 font-semibold text-xs sm:text-sm text-yellow-800 flex items-center gap-2 sm:gap-3">
+                    <div className="animate-spin rounded-full h-4 w-4 sm:h-5 sm:w-5 border-b-2 border-yellow-600" />
+                    <span>Aguardando confirmação do pagamento...</span>
                   </div>
                   
-
                   {/* COMO PROCEDER */}
                   <div className="bg-blue-100 border-l-4 border-blue-500 rounded-lg p-3 sm:p-4">
                     <h4 className="font-bold text-xs sm:text-sm text-blue-800 mb-1.5 sm:mb-2 flex items-center gap-2">
