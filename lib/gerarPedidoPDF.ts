@@ -1,4 +1,4 @@
-// lib/gerarPedidoPDF.ts - VERSÃO PROFISSIONAL COM CABEÇALHO COMPLETO
+// lib/gerarPedidoPDF.ts - VERSÃO MINIMALISTA (SEM BORDAS, APENAS ALINHADO)
 
 import jsPDF from 'jspdf'
 import autoTable from 'jspdf-autotable'
@@ -38,268 +38,255 @@ export function gerarPedidoPDF(dados: DadosPedido): jsPDF {
   const doc = new jsPDF()
   
   // ============================================
-  // CABEÇALHO COMPLETO COM FUNDO AZUL
+  // CABEÇALHO SIMPLES E ALINHADO
   // ============================================
   
-  // Fundo azul do cabeçalho (mais alto para caber todas as informações)
-  doc.setFillColor(13, 74, 118) // #0d4a76 - cor azul da Fácil
-  doc.rect(0, 0, 210, 42, 'F')
-  
-  // Borda dourada no cabeçalho
-  doc.setDrawColor(255, 215, 0) // Dourado
-  doc.setLineWidth(2)
-  doc.rect(5, 5, 200, 32, 'S')
-  
-  // LOGO E NOME DA EMPRESA (Lado Esquerdo)
-  if (dados.logoBase64) {
-    try {
-      doc.addImage(dados.logoBase64, 'PNG', 10, 10, 60, 15)
-    } catch (error) {
-      // Texto da logo se falhar
-      doc.setTextColor(255, 215, 0)
-      doc.setFontSize(20)
-      doc.setFont('helvetica', 'bold')
-      doc.text('FÁCIL', 15, 18)
-      doc.setFontSize(8)
-      doc.text('MATERIAL DE CONSTRUÇÃO E BAZAR', 15, 24)
-    }
-  } else {
-    // Texto da logo (padrão)
-    doc.setTextColor(255, 215, 0) // Dourado
-    doc.setFontSize(20)
-    doc.setFont('helvetica', 'bold')
-    doc.text('FÁCIL', 15, 18)
-    doc.setFontSize(8)
-    doc.text('MATERIAL DE CONSTRUÇÃO E BAZAR', 15, 24)
-  }
-  
-  // INFORMAÇÕES DA EMPRESA (Lado Direito)
-  doc.setTextColor(255, 255, 255) // Branco
-  doc.setFontSize(8)
-  doc.setFont('helvetica', 'normal')
-  
-  let yInfo = 12
-  doc.text('Estrada Professor Leandro Farias Sarzedas', 205, yInfo, { align: 'right' })
-  yInfo += 4
-  doc.text('Cantagalo - Rio das Ostras / RJ', 205, yInfo, { align: 'right' })
-  yInfo += 5
+  // Logo centralizado
+  doc.setTextColor(0, 0, 0)
+  doc.setFontSize(28)
   doc.setFont('helvetica', 'bold')
-  doc.text('Telefone: (22) 99913-1594', 205, yInfo, { align: 'right' })
-  yInfo += 4
+  doc.text('FÁCIL', 105, 20, { align: 'center' })
+  
+  doc.setFontSize(10)
   doc.setFont('helvetica', 'normal')
-  doc.text('WhatsApp: (22) 99802-9549', 205, yInfo, { align: 'right' })
-  yInfo += 4
-  doc.text('Email: contato@facilmateriais.com.br', 205, yInfo, { align: 'right' })
+  doc.text('Material de Construção e Bazar', 105, 27, { align: 'center' })
+  
+  // Linha simples separadora
+  doc.setDrawColor(0, 0, 0)
+  doc.setLineWidth(0.5)
+  doc.line(15, 30, 195, 30)
+  
+  // Informações da empresa em uma linha
+  doc.setFontSize(8)
+  doc.text('Estrada Prof. Leandro Farias Sarzedas - Cantagalo, RJ  |  Tel: (22) 99913-1594  |  WhatsApp: (22) 99802-9549', 105, 35, { align: 'center' })
+  
+  doc.line(15, 37, 195, 37)
   
   // ============================================
-  // TÍTULO DO DOCUMENTO
+  // TÍTULO
   // ============================================
-  doc.setTextColor(13, 74, 118) // Azul
+  
   doc.setFontSize(16)
   doc.setFont('helvetica', 'bold')
-  doc.text('PEDIDO DE MATERIAIS DE CONSTRUÇÃO', 105, 52, { align: 'center' })
-  
-  // Linha decorativa dourada
-  doc.setDrawColor(255, 215, 0)
-  doc.setLineWidth(1.5)
-  doc.line(40, 56, 170, 56)
+  doc.text('PEDIDO DE MATERIAIS', 105, 48, { align: 'center' })
   
   // ============================================
-  // INFORMAÇÕES DO PEDIDO (Caixa cinza)
+  // INFORMAÇÕES DO PEDIDO (ALINHADAS)
   // ============================================
-  let y = 64
   
-  // Fundo cinza claro
-  doc.setFillColor(248, 249, 250)
-  doc.setDrawColor(222, 226, 230)
-  doc.setLineWidth(0.5)
-  doc.rect(14, y - 4, 182, 24, 'FD')
+  let y = 58
+  doc.setFontSize(10)
   
-  doc.setTextColor(0, 0, 0)
-  doc.setFontSize(9)
+  // Linha 1: Pedido e Data (alinhados)
   doc.setFont('helvetica', 'bold')
-  
-  // Linha 1: Pedido e Data
-  doc.text('Pedido Nº:', 18, y)
+  doc.text('Pedido Nº:', 15, y)
   doc.setFont('helvetica', 'normal')
   doc.text(dados.pedidoId, 40, y)
   
   doc.setFont('helvetica', 'bold')
-  doc.text('Data:', 120, y)
+  doc.text('Data:', 150, y)
   doc.setFont('helvetica', 'normal')
-  doc.text(dados.data, 135, y)
+  doc.text(dados.data, 165, y)
   
-  y += 6
+  y += 7
   
-  // Linha 2: Cliente e Telefone
+  // Linha 2: Cliente e CPF
   doc.setFont('helvetica', 'bold')
-  doc.text('Cliente:', 18, y)
+  doc.text('Cliente:', 15, y)
   doc.setFont('helvetica', 'normal')
-  doc.text(dados.cliente.nome, 35, y)
+  doc.text(dados.cliente.nome, 40, y)
   
   doc.setFont('helvetica', 'bold')
-  doc.text('Telefone:', 120, y)
+  doc.text('CPF:', 150, y)
   doc.setFont('helvetica', 'normal')
-  doc.text(dados.cliente.telefone, 142, y)
+  doc.text(dados.cliente.cpf, 165, y)
   
-  y += 6
+  y += 7
   
-  // Linha 3: Endereço de Entrega
+  // Linha 3: Telefone
   doc.setFont('helvetica', 'bold')
-  doc.text('Endereço de Entrega:', 18, y)
+  doc.text('Telefone:', 15, y)
   doc.setFont('helvetica', 'normal')
-  const enderecoCompleto = `${dados.cliente.rua}, ${dados.cliente.numero} - ${dados.cliente.bairro}, ${dados.cliente.cidade}/${dados.cliente.estado}`
-  doc.text(enderecoCompleto, 55, y)
+  doc.text(dados.cliente.telefone, 40, y)
   
-  y += 6
+  y += 7
   
-  // Linha 4: CPF
+  // Linha 4: Endereço
   doc.setFont('helvetica', 'bold')
-  doc.text('CPF:', 18, y)
+  doc.text('Endereço:', 15, y)
   doc.setFont('helvetica', 'normal')
-  doc.text(dados.cliente.cpf, 28, y)
+  const endereco = `${dados.cliente.rua}, ${dados.cliente.numero} - ${dados.cliente.bairro}, ${dados.cliente.cidade}/${dados.cliente.estado}`
+  doc.text(endereco, 40, y)
   
-  y += 12
+  // Linha separadora
+  y += 5
+  doc.setLineWidth(0.3)
+  doc.line(15, y, 195, y)
+  
+  y += 8
   
   // ============================================
-  // TABELA DE ITENS
+  // TABELA DE ITENS (SIMPLES E LIMPA)
   // ============================================
+  
   const tableData = dados.itens.map((item, index) => [
     String(index + 1).padStart(2, '0'),
     item.nome,
     item.unidade || 'Unid.',
-    item.qtd,
+    item.qtd.toString(),
     `R$ ${item.preco.toFixed(2)}`,
     `R$ ${(item.preco * item.qtd).toFixed(2)}`
   ])
   
   autoTable(doc, {
     startY: y,
-    head: [['Item', 'Descrição do Material', 'Unidade', 'Qtd', 'Valor Unit.', 'Total']],
+    head: [['Item', 'Descrição', 'Unidade', 'Qtd', 'Valor Unit.', 'Total']],
     body: tableData,
-    theme: 'grid',
+    theme: 'plain',
     headStyles: {
-      fillColor: [13, 74, 118], // Azul da Fácil
-      textColor: [255, 255, 255],
+      fillColor: [255, 255, 255],
+      textColor: [0, 0, 0],
       fontStyle: 'bold',
       halign: 'center',
-      fontSize: 9
+      fontSize: 9,
+      lineWidth: 0.3,
+      lineColor: [0, 0, 0]
     },
     columnStyles: {
       0: { halign: 'center', cellWidth: 15 },
-      1: { halign: 'left', cellWidth: 70 },
-      2: { halign: 'center', cellWidth: 25 },
-      3: { halign: 'center', cellWidth: 20 },
+      1: { halign: 'left', cellWidth: 75 },
+      2: { halign: 'center', cellWidth: 20 },
+      3: { halign: 'center', cellWidth: 15 },
       4: { halign: 'right', cellWidth: 30 },
       5: { halign: 'right', cellWidth: 30 }
     },
     styles: {
       fontSize: 9,
-      cellPadding: 3
+      cellPadding: 3,
+      lineColor: [0, 0, 0],
+      lineWidth: 0.1
     },
-    alternateRowStyles: {
-      fillColor: [248, 249, 250] // Cinza claro alternado
+    bodyStyles: {
+      textColor: [0, 0, 0]
     }
   })
   
   // ============================================
-  // TOTAIS
+  // TOTAIS (ALINHADOS À DIREITA)
   // ============================================
+  
   const finalY = (doc as any).lastAutoTable.finalY + 10
   
   doc.setFont('helvetica', 'normal')
   doc.setFontSize(10)
-  doc.text('Subtotal:', 140, finalY)
-  doc.text(`R$ ${dados.subtotal.toFixed(2)}`, 190, finalY, { align: 'right' })
   
-  doc.text('Taxa de Entrega:', 140, finalY + 6)
-  doc.text(`R$ ${dados.taxaEntrega.toFixed(2)}`, 190, finalY + 6, { align: 'right' })
+  // Subtotal
+  doc.text('Subtotal:', 145, finalY)
+  doc.text(`R$ ${dados.subtotal.toFixed(2)}`, 195, finalY, { align: 'right' })
   
+  // Taxa de Entrega
+  doc.text('Taxa de Entrega:', 145, finalY + 6)
+  doc.text(`R$ ${dados.taxaEntrega.toFixed(2)}`, 195, finalY + 6, { align: 'right' })
+  
+  // Linha separadora
+  doc.setLineWidth(0.3)
+  doc.line(145, finalY + 8, 195, finalY + 8)
+  
+  // Total
   doc.setFont('helvetica', 'bold')
   doc.setFontSize(12)
-  doc.text('TOTAL:', 140, finalY + 14)
-  doc.text(`R$ ${dados.total.toFixed(2)}`, 190, finalY + 14, { align: 'right' })
+  doc.text('TOTAL:', 145, finalY + 14)
+  doc.text(`R$ ${dados.total.toFixed(2)}`, 195, finalY + 14, { align: 'right' })
+  
+  // Linha dupla abaixo do total
+  doc.setLineWidth(0.5)
+  doc.line(145, finalY + 16, 195, finalY + 16)
   
   // ============================================
-  // INFORMAÇÕES DE ENTREGA - BOX DESTACADO
+  // INFORMAÇÕES DE ENTREGA
   // ============================================
-  let yEntrega = finalY + 25
   
-  // Caixa com fundo amarelo claro e borda dourada
-  doc.setFillColor(255, 248, 220) // Amarelo claro
-  doc.setDrawColor(255, 215, 0) // Borda dourada
-  doc.setLineWidth(2)
-  doc.rect(14, yEntrega - 5, 182, 28, 'FD')
+  let yEntrega = finalY + 28
   
-  // Título
-  doc.setTextColor(13, 74, 118) // Azul
   doc.setFontSize(11)
   doc.setFont('helvetica', 'bold')
-  doc.text('📦 INFORMAÇÕES DE ENTREGA', 18, yEntrega + 2)
+  doc.text('INFORMAÇÕES DE ENTREGA', 15, yEntrega)
   
-  doc.setTextColor(0, 0, 0)
-  doc.setFont('helvetica', 'normal')
-  doc.setFontSize(9)
+  doc.setLineWidth(0.3)
+  doc.line(15, yEntrega + 1, 195, yEntrega + 1)
   
   yEntrega += 8
-  doc.setFont('helvetica', 'bold')
-  doc.text('Endereço:', 18, yEntrega)
   doc.setFont('helvetica', 'normal')
-  doc.text('Rua Recanto Madureira, 521 – Cantagalo – Rio das Ostras / RJ', 38, yEntrega)
+  doc.setFontSize(9)
   
-  yEntrega += 5
   doc.setFont('helvetica', 'bold')
-  doc.text('Horário:', 18, yEntrega)
+  doc.text('Endereço:', 15, yEntrega)
   doc.setFont('helvetica', 'normal')
-  doc.text('Segunda a Sexta, das 08h às 17h', 35, yEntrega)
+  doc.text('Rua Recanto Madureira, 521 – Cantagalo – Rio das Ostras / RJ', 40, yEntrega)
   
-  yEntrega += 5
+  yEntrega += 6
   doc.setFont('helvetica', 'bold')
-  doc.text('Contato:', 18, yEntrega)
+  doc.text('Horário:', 15, yEntrega)
   doc.setFont('helvetica', 'normal')
-  doc.text('(22) 99802-9549 | (22) 99913-1594', 35, yEntrega)
+  doc.text('Segunda a Sexta, das 08h às 17h', 40, yEntrega)
+  
+  yEntrega += 6
+  doc.setFont('helvetica', 'bold')
+  doc.text('Contato:', 15, yEntrega)
+  doc.setFont('helvetica', 'normal')
+  doc.text('(22) 99802-9549  |  (22) 99913-1594', 40, yEntrega)
   
   // ============================================
-  // ASSINATURA (APENAS RECEBEDOR)
+  // ASSINATURA (SIMPLES E ALINHADA)
   // ============================================
-  let yAssinatura = 250
   
-  // Linha de assinatura
-  doc.setDrawColor(0, 0, 0)
-  doc.setLineWidth(0.5)
-  doc.line(60, yAssinatura, 150, yAssinatura)
+  let yAssinatura = 255
   
+  // Recebedor
   doc.setFontSize(9)
   doc.setFont('helvetica', 'bold')
-  doc.text('Assinatura do Recebedor', 105, yAssinatura + 5, { align: 'center' })
+  doc.text('RECEBIDO POR:', 15, yAssinatura)
   
-  yAssinatura += 12
+  yAssinatura += 10
+  doc.setLineWidth(0.3)
+  doc.line(15, yAssinatura, 80, yAssinatura)
+  
+  yAssinatura += 4
   doc.setFont('helvetica', 'normal')
-  doc.text('Data: ____/____/________', 105, yAssinatura, { align: 'center' })
+  doc.setFontSize(8)
+  doc.text('Assinatura', 15, yAssinatura)
+  
+  yAssinatura += 8
+  doc.line(15, yAssinatura, 50, yAssinatura)
+  doc.text('Data: ____/____/________', 15, yAssinatura + 4)
+  
+  // Observações (ao lado)
+  yAssinatura = 255
+  doc.setFont('helvetica', 'bold')
+  doc.setFontSize(9)
+  doc.text('OBSERVAÇÕES:', 110, yAssinatura)
+  
+  doc.setFont('helvetica', 'normal')
+  doc.setLineWidth(0.1)
+  doc.line(110, yAssinatura + 6, 195, yAssinatura + 6)
+  doc.line(110, yAssinatura + 12, 195, yAssinatura + 12)
+  doc.line(110, yAssinatura + 18, 195, yAssinatura + 18)
+  doc.line(110, yAssinatura + 24, 195, yAssinatura + 24)
   
   // ============================================
-  // RODAPÉ PROFISSIONAL
+  // RODAPÉ SIMPLES
   // ============================================
   
-  // Linha decorativa
-  doc.setDrawColor(13, 74, 118)
-  doc.setLineWidth(2)
-  doc.line(14, 278, 196, 278)
+  doc.setLineWidth(0.3)
+  doc.line(15, 285, 195, 285)
   
-  // Fundo azul do rodapé
-  doc.setFillColor(13, 74, 118)
-  doc.rect(14, 280, 182, 10, 'F')
-  
-  // Texto do rodapé
-  doc.setTextColor(255, 255, 255)
   doc.setFontSize(8)
   doc.setFont('helvetica', 'bold')
-  doc.text('Fácil Material de Construção e Bazar', 105, 285, { align: 'center' })
+  doc.text('FÁCIL - Material de Construção e Bazar', 105, 289, { align: 'center' })
   
-  doc.setTextColor(255, 215, 0) // Dourado
-  doc.setFontSize(7)
   doc.setFont('helvetica', 'normal')
-  doc.text('Estrada Prof. Leandro Farias Sarzedas - Cantagalo, Rio das Ostras/RJ | (22) 99913-1594', 105, 288, { align: 'center' })
+  doc.setFontSize(7)
+  doc.text('Cantagalo, Rio das Ostras/RJ  |  (22) 99913-1594  |  (22) 99802-9549', 105, 292, { align: 'center' })
   
   return doc
 }
