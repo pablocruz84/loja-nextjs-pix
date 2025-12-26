@@ -1,4 +1,8 @@
-// /app/api/webhook/route.ts
+// ═══════════════════════════════════════════════════════════
+// ARQUIVO: app/api/webhook/route.ts
+// ═══════════════════════════════════════════════════════════
+// SUBSTITUA TODO O CONTEÚDO POR ESTE:
+
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 
@@ -18,6 +22,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ received: true })
     }
 
+    console.log('💳 Payment ID encontrado:', paymentId)
+
     // 🔐 Variáveis de ambiente
     const mpToken = process.env.MERCADOPAGO_ACCESS_TOKEN
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
@@ -29,6 +35,7 @@ export async function POST(request: NextRequest) {
     }
 
     // 🔍 Buscar pagamento no Mercado Pago
+    console.log('🔍 Consultando pagamento no Mercado Pago...')
     const mpResponse = await fetch(
       `https://api.mercadopago.com/v1/payments/${paymentId}`,
       {
@@ -52,8 +59,8 @@ export async function POST(request: NextRequest) {
 
     // ⏳ Ignora se não estiver aprovado
     if (payment.status !== 'approved') {
-      console.log('⏳ Pagamento ainda não aprovado')
-      return NextResponse.json({ received: true })
+      console.log('⏳ Pagamento ainda não aprovado, status:', payment.status)
+      return NextResponse.json({ received: true, status: payment.status })
     }
 
     if (!payment.external_reference) {
@@ -65,6 +72,7 @@ export async function POST(request: NextRequest) {
     const supabase = createClient(supabaseUrl, supabaseKey)
 
     // 🔎 Buscar venda PELO external_reference (ID DA VENDA)
+    console.log('🔎 Buscando venda com ID:', payment.external_reference)
     const { data: venda, error: vendaError } = await supabase
       .from('vendas')
       .select('*')
@@ -73,8 +81,12 @@ export async function POST(request: NextRequest) {
 
     if (vendaError || !venda) {
       console.error('❌ Venda não encontrada:', vendaError)
-      return NextResponse.json({ received: true })
+      return NextResponse.json({ received: true, error: 'Venda não encontrada' })
     }
+
+    console.log('📦 VENDA ENCONTRADA:')
+    console.log('- ID:', venda.id)
+    console.log('- Status atual:', venda.status)
 
     // 🛑 Evita duplicidade
     if (venda.status === 'pago') {
@@ -83,6 +95,7 @@ export async function POST(request: NextRequest) {
     }
 
     // ✅ Atualizar venda para PAGO
+    console.log('💾 Atualizando venda para PAGO...')
     const { error: updateError } = await supabase
       .from('vendas')
       .update({
@@ -94,7 +107,7 @@ export async function POST(request: NextRequest) {
 
     if (updateError) {
       console.error('❌ Erro ao atualizar venda:', updateError)
-      return NextResponse.json({ received: true })
+      return NextResponse.json({ received: true, error: 'Erro ao atualizar' })
     }
 
     console.log('✅ VENDA ATUALIZADA COM SUCESSO:', venda.id)
@@ -112,7 +125,7 @@ export async function POST(request: NextRequest) {
     console.error(error)
     console.error('═══════════════════════════════════════')
 
-    return NextResponse.json({ received: true })
+    return NextResponse.json({ received: true, error: error.message })
   }
 }
 
