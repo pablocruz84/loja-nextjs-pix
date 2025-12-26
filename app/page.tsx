@@ -261,23 +261,27 @@ export default function Home() {
 
     try {
       // 1️⃣ PRIMEIRO: Criar ou buscar cliente
+      console.log('1️⃣ Buscando/criando cliente...')
       let cliente = await buscarClientePorCPF(dadosCliente.cpf)
-      if (!cliente) cliente = await criarCliente(dadosCliente)
+      if (!cliente) {
+        console.log('Cliente não encontrado, criando novo...')
+        cliente = await criarCliente(dadosCliente)
+      }
+      console.log('✅ Cliente:', cliente.id)
 
-      // 2️⃣ SEGUNDO: Criar venda NO BANCO (status pendente)
-
+      // 2️⃣ SEGUNDO: Criar venda no banco (sem pix_id ainda)
+      console.log('2️⃣ Criando venda no banco...')
       const venda = await criarVenda({
         cliente_id: cliente.id,
         produtos: carrinho,
         total,
         status: 'pendente'
-        // Não inclua pix_id nem pix_qr_code
       })
-
       console.log('✅ Venda criada:', venda.id)
       setVendaId(venda.id)
 
       // 3️⃣ TERCEIRO: Gerar PIX no Mercado Pago COM vendaId
+      console.log('3️⃣ Gerando PIX no Mercado Pago...')
       const response = await fetch('/api/mercadopago/pix', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -285,7 +289,7 @@ export default function Home() {
           total, 
           carrinho, 
           dadosCliente,
-          vendaId: venda.id  // 🔥 CRITICAL: Envia o ID da venda
+          vendaId: venda.id
         })
       })
 
@@ -297,11 +301,12 @@ export default function Home() {
 
       console.log('✅ PIX gerado:', pixData.id)
 
-      // 4️⃣ QUARTO: Atualizar venda com dados do PIX
-      await atualizarStatusVenda(venda.id, 'pendente', pixData.id)
+      // 4️⃣ QUARTO: Atualizar venda com pix_id e QR code
+      console.log('4️⃣ Atualizando venda com dados do PIX...')
+      await atualizarStatusVenda(venda.id, 'pendente', pixData.id, pixData.qr_code)
+      console.log('✅ Venda atualizada com pix_id')
 
       setPixGerado(pixData)
-
     } catch (error: any) {
       console.error('❌ Erro ao gerar PIX:', error)
       alert('Erro ao gerar PIX: ' + error.message)
@@ -310,6 +315,7 @@ export default function Home() {
       setCarregandoPix(false)
     }
   }
+      
 
 
   // Renderização das etapas

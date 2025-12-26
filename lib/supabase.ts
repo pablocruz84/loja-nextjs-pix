@@ -1,7 +1,5 @@
 import { createClient } from '@supabase/supabase-js'
 
-
-
 // Configuração do Supabase
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
@@ -43,7 +41,7 @@ export interface Cliente {
 export interface Venda {
   id: number
   cliente_id: number
-  produtos: any[] // Array de produtos
+  produtos: any[]
   total: number
   status: 'pendente' | 'pago' | 'cancelado'
   pix_id?: string
@@ -164,7 +162,12 @@ export async function criarVenda(venda: Omit<Venda, 'id' | 'data_venda'>) {
   return data[0] as Venda
 }
 
-export async function atualizarStatusVenda(vendaId: number, status: string, pixId?: string) {
+export async function atualizarStatusVenda(
+  vendaId: number, 
+  status: string, 
+  pixId?: string,
+  pixQrCode?: string
+) {
   const updateData: any = { status }
   
   if (status === 'pago') {
@@ -173,6 +176,10 @@ export async function atualizarStatusVenda(vendaId: number, status: string, pixI
   
   if (pixId) {
     updateData.pix_id = pixId
+  }
+
+  if (pixQrCode) {
+    updateData.pix_qr_code = pixQrCode
   }
 
   const { data, error } = await supabase
