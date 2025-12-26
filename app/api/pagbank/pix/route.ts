@@ -5,94 +5,89 @@ export async function POST(request: NextRequest) {
   try {
     const { total, dadosCliente, carrinho } = await request.json()
 
-    const token = process.env.PAGBANK_TOKEN
-    const pixKey = process.env.PAGBANK_PIX_KEY
+    if (!total || !dadosCliente || !carrinho?.length) {
+      return NextResponse.json(
+        { error: 'Dados inválidos para gerar PIX' },
+        { status: 400 }
+      )
+    }
 
-    if (!token || !pixKey) {
-      console.error('❌ Credenciais PagBank não configuradas')
+    const token = process.env.MERCADOPAGO_ACCESS_TOKEN
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL
+
+    if (!token || !baseUrl) {
+      console.error('❌ Variáveis de ambiente ausentes')
       return NextResponse.json(
         { error: 'Configuração de pagamento ausente' },
         { status: 500 }
       )
     }
 
-    const valorArredondado = (Math.round(total * 100) / 100).toFixed(2)
+    // ✅ Valor arredondado corretamente
+    const valorArredondado = Math.round(Number(total) * 100) / 100
+
+    // ✅ Idempotency Key
     const idempotencyKey = randomUUID()
 
-    // ✅ Headers completos para passar pelo Cloudflare
-    const response = await fetch("https://api.pagseguro.com/instant-payments/cob", {
-      method: "POST",
+    console.log('═══════════════════════════════════════')
+    console.log('💰 PIX sendo gerado:')
+    console.log('Valor:', valorArredondado)
+    console.log('Cliente:', dadosCliente.nome)
+    console.log('Idempotency Key:', idempotencyKey)
+    console.log('Webhook:', `${baseUrl}/api/webhook`)
+    console.log('═══════════════════════════════════════')
+
+    const response = await fetch('https://api.mercadopago.com/v1/payments', {
+      method: 'POST',
       headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${token}`,
-        "X-Idempotency-Key": idempotencyKey,
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
-        "Accept": "application/json",
-        "Accept-Language": "pt-BR,pt;q=0.9",
-        "Origin": "https://pagseguro.uol.com.br",
-        "Referer": "https://pagseguro.uol.com.br/"
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
+        'X-Idempotency-Key': idempotencyKey
       },
       body: JSON.stringify({
-        calendario: {
-          expiracao: 3600
-        },
-        devedor: {
-          cpf: dadosCliente.cpf.replace(/\D/g, ''),
-          nome: dadosCliente.nome
-        },
-        valor: {
-          original: valorArredondado
-        },
-        chave: pixKey,
-        solicitacaoPagador: `Pedido - ${carrinho.length} itens`
+        transaction_amount: valorArredondado,
+        description: `Pedido - ${carrinho.length} itens`,
+        payment_method_id: 'pix',
+        notification_url: `${baseUrl}/api/webhook`,
+        payer: {
+          email:
+            dadosCliente.email ||
+            `${dadosCliente.nome.toLowerCase().replace(/\s/g, '')}@email.com`,
+          first_name: dadosCliente.nome.split(' ')[0],
+          last_name:
+            dadosCliente.nome.split(' ').slice(1).join(' ') ||
+            dadosCliente.nome.split(' ')[0],
+          identification: {
+            type: 'CPF',
+            number: dadosCliente.cpf.replace(/\D/g, '')
+          }
+        }
       })
     })
 
-    const responseText = await response.text()
-
-    // Verificar se a resposta é HTML (Cloudflare bloqueou)
-    if (responseText.includes('<!DOCTYPE') || responseText.includes('Cloudflare')) {
-      console.error('❌ PagBank bloqueado pelo Cloudflare')
-      return NextResponse.json(
-        { 
-          error: 'PagBank temporariamente indisponível',
-          details: 'Requisição bloqueada pelo firewall. Use Mercado Pago como alternativa.'
-        },
-        { status: 503 }
-      )
-    }
-
-    let data
-    try {
-      data = JSON.parse(responseText)
-    } catch (e) {
-      console.error('❌ Resposta não é JSON:', responseText.substring(0, 200))
-      return NextResponse.json(
-        { error: 'Erro ao processar resposta do PagBank' },
-        { status: 500 }
-      )
-    }
+    const data = await response.json()
 
     if (!response.ok) {
-      console.error('❌ Erro PagBank:', data)
+      console.error('❌ Erro Mercado Pago:', data)
       return NextResponse.json(
-        { error: 'Erro ao gerar PIX no PagBank', details: data },
+        { error: 'Erro ao gerar PIX', details: data },
         { status: response.status }
       )
     }
 
-    console.log('✅ PIX PagBank gerado:', data.txid)
+    console.log('✅ PIX gerado com sucesso!')
+    console.log('ID do pagamento:', data.id)
+    console.log('Status:', data.status)
 
     return NextResponse.json({
-      id: data.txid,
-      status: 'pending',
-      qr_code: data.pixCopiaECola,
-      qr_code_base64: data.qrcode || null,
-      ticket_url: null
+      id: data.id,
+      status: data.status,
+      qr_code: data.point_of_interaction.transaction_data.qr_code,
+      qr_code_base64: data.point_of_interaction.transaction_data.qr_code_base64,
+      ticket_url: data.point_of_interaction.transaction_data.ticket_url
     })
-
   } catch (error: any) {
-    console.error('❌ Erro na API PagBank:', error)
+    console.error('❌ Erro interno:', error)
     return NextResponse.json(
       { error: 'Erro interno do servidor', message: error.message },
       { status: 500 }

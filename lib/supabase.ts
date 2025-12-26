@@ -1,5 +1,8 @@
 import { createClient } from '@supabase/supabase-js'
 
+
+
+// Configuração do Supabase
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 
@@ -40,7 +43,7 @@ export interface Cliente {
 export interface Venda {
   id: number
   cliente_id: number
-  produtos: any[]
+  produtos: any[] // Array de produtos
   total: number
   status: 'pendente' | 'pago' | 'cancelado'
   pix_id?: string
@@ -108,35 +111,20 @@ export async function buscarClientes() {
 }
 
 export async function buscarClientePorCPF(cpf: string) {
-  const cpfLimpo = cpf.replace(/\D/g, '')
-  
   const { data, error } = await supabase
     .from('clientes')
     .select('*')
-    .eq('cpf', cpfLimpo)
+    .eq('cpf', cpf)
     .single()
   
   if (error && error.code !== 'PGRST116') throw error
   return data as Cliente | null
 }
 
-export async function criarCliente(clienteData: any) {
-  const cpfLimpo = clienteData.cpf.replace(/\D/g, '')
-  
+export async function criarCliente(cliente: Omit<Cliente, 'id' | 'total_compras' | 'criado_em'>) {
   const { data, error } = await supabase
     .from('clientes')
-    .insert([{
-      nome: clienteData.nome,
-      cpf: cpfLimpo,
-      telefone: clienteData.telefone,
-      rua: clienteData.rua,
-      numero: clienteData.numero,
-      bairro: clienteData.bairro,
-      cidade: clienteData.cidade,
-      estado: clienteData.estado,
-      ponto_referencia: clienteData.pontoReferencia || '',
-      total_compras: 0
-    }])
+    .insert([cliente])
     .select()
   
   if (error) throw error
@@ -144,18 +132,9 @@ export async function criarCliente(clienteData: any) {
 }
 
 export async function incrementarComprasCliente(clienteId: number) {
-  const { data: cliente } = await supabase
-    .from('clientes')
-    .select('total_compras')
-    .eq('id', clienteId)
-    .single()
+  const { error } = await supabase.rpc('incrementar_compras', { cliente_id: clienteId })
   
-  if (cliente) {
-    await supabase
-      .from('clientes')
-      .update({ total_compras: (cliente.total_compras || 0) + 1 })
-      .eq('id', clienteId)
-  }
+  if (error) throw error
 }
 
 // ================================================
@@ -207,7 +186,7 @@ export async function atualizarStatusVenda(vendaId: number, status: string, pixI
 }
 
 // ================================================
-// FUNÇÃO AUXILIAR
+// FUNÇÃO AUXILIAR PARA GERAR PRÓXIMO CÓDIGO
 // ================================================
 
 export async function gerarProximoCodigo() {
