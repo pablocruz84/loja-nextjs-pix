@@ -7,7 +7,7 @@ export async function POST(request: NextRequest) {
 
     if (!total || !dadosCliente || !carrinho?.length) {
       return NextResponse.json(
-        { error: 'Dados inválidos para gerar PIX' },
+        { success: false, error: 'Dados inválidos para gerar PIX' },
         { status: 400 }
       )
     }
@@ -18,22 +18,18 @@ export async function POST(request: NextRequest) {
     if (!token || !baseUrl) {
       console.error('❌ Variáveis de ambiente ausentes')
       return NextResponse.json(
-        { error: 'Configuração de pagamento ausente' },
+        { success: false, error: 'Configuração de pagamento ausente' },
         { status: 500 }
       )
     }
 
-    // ✅ Valor arredondado corretamente
     const valorArredondado = Math.round(Number(total) * 100) / 100
-
-    // ✅ Idempotency Key
     const idempotencyKey = randomUUID()
 
     console.log('═══════════════════════════════════════')
     console.log('💰 PIX sendo gerado:')
     console.log('Valor:', valorArredondado)
     console.log('Cliente:', dadosCliente.nome)
-    console.log('Idempotency Key:', idempotencyKey)
     console.log('Webhook:', `${baseUrl}/api/webhook`)
     console.log('═══════════════════════════════════════')
 
@@ -48,18 +44,11 @@ export async function POST(request: NextRequest) {
         transaction_amount: valorArredondado,
         description: `Pedido - ${carrinho.length} itens`,
         payment_method_id: 'pix',
-
-        // ✅ ESSENCIAL PARA O WEBHOOK FUNCIONAR
         notification_url: `${baseUrl}/api/webhook`,
-
         payer: {
-          email:
-            dadosCliente.email ||
-            `${dadosCliente.nome.toLowerCase().replace(/\s/g, '')}@email.com`,
+          email: dadosCliente.email || `${dadosCliente.nome.toLowerCase().replace(/\s/g, '')}@email.com`,
           first_name: dadosCliente.nome.split(' ')[0],
-          last_name:
-            dadosCliente.nome.split(' ').slice(1).join(' ') ||
-            dadosCliente.nome.split(' ')[0],
+          last_name: dadosCliente.nome.split(' ').slice(1).join(' ') || dadosCliente.nome.split(' ')[0],
           identification: {
             type: 'CPF',
             number: dadosCliente.cpf.replace(/\D/g, '')
@@ -73,16 +62,16 @@ export async function POST(request: NextRequest) {
     if (!response.ok) {
       console.error('❌ Erro Mercado Pago:', data)
       return NextResponse.json(
-        { error: 'Erro ao gerar PIX', details: data },
+        { success: false, error: 'Erro ao gerar PIX', details: data },
         { status: response.status }
       )
     }
 
     console.log('✅ PIX gerado com sucesso!')
     console.log('ID do pagamento:', data.id)
-    console.log('Status:', data.status)
 
     return NextResponse.json({
+      success: true,
       id: data.id,
       status: data.status,
       qr_code: data.point_of_interaction.transaction_data.qr_code,
@@ -92,7 +81,7 @@ export async function POST(request: NextRequest) {
   } catch (error: any) {
     console.error('❌ Erro interno:', error)
     return NextResponse.json(
-      { error: 'Erro interno do servidor', message: error.message },
+      { success: false, error: 'Erro interno do servidor', message: error.message },
       { status: 500 }
     )
   }
