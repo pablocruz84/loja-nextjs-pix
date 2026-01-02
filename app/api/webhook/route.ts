@@ -1,7 +1,7 @@
 // ═══════════════════════════════════════════════════════════
 // ARQUIVO: app/api/webhook/route.ts
 // ═══════════════════════════════════════════════════════════
-// SUBSTITUA TODO O CONTEÚDO POR ESTE:
+// Webhook para receber notificações do PagBank
 
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
@@ -11,72 +11,95 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
 
     console.log('═══════════════════════════════════════')
-    console.log('📩 WEBHOOK MERCADO PAGO RECEBIDO')
+    console.log('📩 WEBHOOK PAGBANK RECEBIDO')
     console.log(JSON.stringify(body, null, 2))
     console.log('═══════════════════════════════════════')
 
-    // 🔑 Mercado Pago pode enviar o ID em diferentes formatos
-    const paymentId = body?.data?.id || body?.id
-    if (!paymentId) {
-      console.log('⚠️ Webhook sem payment id')
+    // 🔑 PagBank envia notificações com diferentes estruturas
+    // Formato: { id: "ORDE_...", reference_id: "...", created_at: "..." }
+    const orderId = body?.id
+    const referenceId = body?.reference_id
+
+    if (!orderId) {
+      console.log('⚠️ Webhook sem order id')
       return NextResponse.json({ received: true })
     }
 
-    console.log('💳 Payment ID encontrado:', paymentId)
+    console.log('📦 Order ID encontrado:', orderId)
+    console.log('🔗 Reference ID:', referenceId)
 
     // 🔐 Variáveis de ambiente
-    const mpToken = process.env.MERCADOPAGO_ACCESS_TOKEN
+    const pagbankToken = process.env.PAGBANK_TOKEN
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
     const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY
 
-    if (!mpToken || !supabaseUrl || !supabaseKey) {
+    if (!pagbankToken || !supabaseUrl || !supabaseKey) {
       console.error('❌ Variáveis de ambiente faltando')
       return NextResponse.json({ received: true })
     }
 
-    // 🔍 Buscar pagamento no Mercado Pago
-    console.log('🔍 Consultando pagamento no Mercado Pago...')
-    const mpResponse = await fetch(
-      `https://api.mercadopago.com/v1/payments/${paymentId}`,
+    // 🔍 Buscar pedido no PagBank para confirmar status
+    console.log('🔍 Consultando pedido no PagBank...')
+    const pagbankResponse = await fetch(
+      `https://api.pagseguro.com/orders/${orderId}`,
       {
-        headers: { Authorization: `Bearer ${mpToken}` }
+        headers: { 
+          'Authorization': `Bearer ${pagbankToken}`,
+          'x-api-version': '4.0'
+        }
       }
     )
 
-    if (!mpResponse.ok) {
-      console.error('❌ Erro ao consultar pagamento no Mercado Pago')
-      const text = await mpResponse.text()
+    if (!pagbankResponse.ok) {
+      console.error('❌ Erro ao consultar pedido no PagBank')
+      const text = await pagbankResponse.text()
       console.error('Detalhes:', text)
       return NextResponse.json({ received: true })
     }
 
-    const payment = await mpResponse.json()
+    const order = await pagbankResponse.json()
 
-    console.log('💳 PAGAMENTO CONSULTADO:')
-    console.log('- ID:', payment.id)
-    console.log('- STATUS:', payment.status)
-    console.log('- EXTERNAL_REFERENCE:', payment.external_reference)
+    console.log('📦 PEDIDO CONSULTADO:')
+    console.log('- ID:', order.id)
+    console.log('- STATUS:', order.status)
+    console.log('- REFERENCE_ID:', order.reference_id)
+    console.log('- CHARGES:', order.charges?.length || 0)
 
-    // ⏳ Ignora se não estiver aprovado
-    if (payment.status !== 'approved') {
-      console.log('⏳ Pagamento ainda não aprovado, status:', payment.status)
-      return NextResponse.json({ received: true, status: payment.status })
+    // ⏳ Verificar status do pagamento
+    // Status PagBank: PAID, WAITING, DECLINED, CANCELED
+    const isPaid = order.status === 'PAID' || 
+                   order.charges?.some((charge: any) => charge.status === 'PAID')
+
+    if (!isPaid) {
+      console.log('⏳ Pagamento ainda não confirmado, status:', order.status)
+      return NextResponse.json({ received: true, status: order.status })
     }
 
-    if (!payment.external_reference) {
-      console.error('❌ Pagamento aprovado sem external_reference')
+    if (!order.reference_id) {
+      console.error('❌ Pedido pago sem reference_id')
       return NextResponse.json({ received: true })
     }
+
+    // 🔍 Extrair ID da venda do reference_id
+    // Formato esperado: "VENDA-123-1234567890"
+    const vendaIdMatch = order.reference_id.match(/VENDA-(\d+)/)
+    if (!vendaIdMatch) {
+      console.error('❌ Reference ID não contém ID da venda:', order.reference_id)
+      return NextResponse.json({ received: true, error: 'Reference ID inválido' })
+    }
+
+    const vendaId = vendaIdMatch[1]
+    console.log('🎯 ID da venda extraído:', vendaId)
 
     // 🔗 Conexão Supabase (SERVICE ROLE)
     const supabase = createClient(supabaseUrl, supabaseKey)
 
-    // 🔎 Buscar venda PELO external_reference (ID DA VENDA)
-    console.log('🔎 Buscando venda com ID:', payment.external_reference)
+    // 🔎 Buscar venda pelo ID
+    console.log('🔎 Buscando venda com ID:', vendaId)
     const { data: venda, error: vendaError } = await supabase
       .from('vendas')
       .select('*')
-      .eq('id', payment.external_reference)
+      .eq('id', vendaId)
       .single()
 
     if (vendaError || !venda) {
@@ -101,7 +124,8 @@ export async function POST(request: NextRequest) {
       .update({
         status: 'pago',
         data_pagamento: new Date().toISOString(),
-        mp_payment_id: payment.id
+        pagbank_order_id: order.id,
+        pagbank_reference_id: order.reference_id
       })
       .eq('id', venda.id)
 
@@ -116,7 +140,8 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       received: true,
       updated: true,
-      vendaId: venda.id
+      vendaId: venda.id,
+      orderId: order.id
     })
 
   } catch (error: any) {
@@ -131,7 +156,7 @@ export async function POST(request: NextRequest) {
 
 export async function GET() {
   return NextResponse.json({
-    status: 'Webhook Mercado Pago ativo',
+    status: 'Webhook PagBank ativo',
     time: new Date().toISOString()
   })
 }

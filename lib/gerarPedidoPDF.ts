@@ -234,7 +234,7 @@ export function gerarPedidoPDF(dados: DadosPedido): jsPDF {
   doc.setFont('helvetica', 'bold')
   doc.text('Contato:', 15, yEntrega)
   doc.setFont('helvetica', 'normal')
-  doc.text('(22) 99802-9549  |  (22) 99913-1594', 40, yEntrega)
+  doc.text('(22) 99913-1594  |  (22) 99913-1594', 40, yEntrega)
   
   // ============================================
   // ASSINATURA (SIMPLES E ALINHADA)

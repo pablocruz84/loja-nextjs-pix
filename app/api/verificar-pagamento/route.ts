@@ -51,10 +51,79 @@ export async function POST(request: NextRequest) {
       })
     }
 
-    // Pagamento APROVADO! Atualizar banco
-    console.log('✅ Pagamento aprovado! Atualizando banco...')
+    // Pagamento APROVADO! Buscar venda e atualizar
+    console.log('✅ Pagamento aprovado! Buscando venda...')
     const supabase = createClient(supabaseUrl, supabaseKey)
 
+    // Buscar venda com produtos
+    const { data: venda, error: vendaError } = await supabase
+      .from('vendas')
+      .select('*')
+      .eq('id', vendaId)
+      .single()
+
+    if (vendaError || !venda) {
+      console.error('❌ Venda não encontrada')
+      return NextResponse.json({ 
+        success: false, 
+        error: 'Venda não encontrada' 
+      })
+    }
+
+    // Evitar duplicidade
+    if (venda.status === 'pago') {
+      console.log('✅ Venda já estava paga')
+      return NextResponse.json({ 
+        success: true, 
+        status: 'pago',
+        alreadyPaid: true
+      })
+    }
+
+    // ========================================
+    // BAIXAR ESTOQUE DOS PRODUTOS
+    // ========================================
+    console.log('📦 Baixando estoque dos produtos...')
+    
+    for (const item of venda.produtos) {
+      try {
+        // Buscar produto
+        const { data: produto } = await supabase
+          .from('produtos')
+          .select('id, nome, estoque')
+          .eq('id', item.id)
+          .single()
+
+        if (!produto) {
+          console.error(`❌ Produto ${item.id} não encontrado`)
+          continue
+        }
+
+        // Novo estoque
+        const novoEstoque = produto.estoque - item.qtd
+
+        if (novoEstoque < 0) {
+          console.warn(`⚠️ ${produto.nome} ficará com estoque negativo (${novoEstoque})`)
+        }
+
+        // Atualizar
+        await supabase
+          .from('produtos')
+          .update({ estoque: novoEstoque })
+          .eq('id', item.id)
+
+        console.log(`✅ ${produto.nome}: ${produto.estoque} → ${novoEstoque}`)
+      } catch (err) {
+        console.error(`❌ Erro ao atualizar produto ${item.id}:`, err)
+      }
+    }
+
+    console.log('✅ Estoque atualizado!')
+
+    // ========================================
+    // ATUALIZAR VENDA
+    // ========================================
+    console.log('💾 Atualizando venda para PAGO...')
     const { error: updateError } = await supabase
       .from('vendas')
       .update({
@@ -65,7 +134,7 @@ export async function POST(request: NextRequest) {
       .eq('id', vendaId)
 
     if (updateError) {
-      console.error('❌ Erro ao atualizar:', updateError)
+      console.error('❌ Erro ao atualizar venda:', updateError)
       return NextResponse.json({ 
         success: false, 
         error: 'Erro ao atualizar banco' 
@@ -76,7 +145,8 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ 
       success: true, 
       status: 'pago',
-      vendaId
+      vendaId,
+      estoqueAtualizado: true
     })
 
   } catch (error: any) {
