@@ -4,7 +4,6 @@
 // API para gerar pagamento PIX via PagBank
 
 import { NextRequest, NextResponse } from 'next/server'
-import { randomUUID } from 'crypto'
 
 export async function POST(request: NextRequest) {
   try {
@@ -46,7 +45,7 @@ export async function POST(request: NextRequest) {
     const items = carrinho.map((item: any, index: number) => ({
       reference_id: `ITEM-${index + 1}`,
       name: item.nome || 'Produto',
-      quantity: item.quantidade || 1,
+      quantity: item.qtd || 1,
       unit_amount: Math.round((item.preco || 0) * 100)
     }))
 
@@ -60,7 +59,7 @@ export async function POST(request: NextRequest) {
         phones: [
           {
             country: '55',
-            area: dadosCliente.telefone ? dadosCliente.telefone.replace(/\D/g, '').substring(0, 2) : '11',
+            area: dadosCliente.telefone ? dadosCliente.telefone.replace(/\D/g, '').substring(0, 2) : '22',
             number: dadosCliente.telefone ? dadosCliente.telefone.replace(/\D/g, '').substring(2) : '999999999',
             type: 'MOBILE'
           }
@@ -77,14 +76,14 @@ export async function POST(request: NextRequest) {
       ],
       shipping: {
         address: {
-          street: dadosCliente.endereco || 'Rua Principal',
+          street: dadosCliente.rua || 'Rua Principal',
           number: dadosCliente.numero || 'S/N',
           complement: dadosCliente.complemento || '',
           locality: dadosCliente.bairro || 'Centro',
           city: dadosCliente.cidade || 'Rio das Ostras',
           region_code: dadosCliente.estado || 'RJ',
           country: 'BRA',
-          postal_code: dadosCliente.cep ? dadosCliente.cep.replace(/\D/g, '') : '00000000'
+          postal_code: dadosCliente.cep ? dadosCliente.cep.replace(/\D/g, '') : '28890000'
         }
       },
       notification_urls: [
