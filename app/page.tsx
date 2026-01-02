@@ -221,7 +221,7 @@ export default function Home() {
   const carregarProdutos = async () => {
     try {
       const produtosDB = await buscarProdutos()
-      const produtosFormatados = produtosDB.map((p: ProdutoDB) => ({
+      const produtosFormatados = produtosDB.map((p: any) => ({
         id: p.id,
         nome: p.nome,
         categoria: p.categoria,
@@ -279,11 +279,11 @@ export default function Home() {
 
     try {
       const cpfLimpo = dadosCliente.cpf.replace(/\D/g, '')
-      const cliente = await buscarClientePorCPF(cpfLimpo)
+      const cliente = await buscarClientePorCPF(cpfLimpo) as any
 
       if (cliente) {
         setDadosCliente({
-          nome: cliente.nome,
+          nome: cliente.nome || '',
           cpf: dadosCliente.cpf,
           telefone: cliente.telefone || '',
           rua: cliente.endereco || '',
@@ -345,7 +345,7 @@ export default function Home() {
           quantidade: item.qtd,
           preco: item.preco
         }))
-      })
+      } as any)
 
       if (!venda || !venda.id) {
         throw new Error('Erro ao criar venda no banco')
@@ -370,7 +370,7 @@ export default function Home() {
           cep: dadosCliente.cep.replace(/\D/g, ''),
           complemento: dadosCliente.complemento,
           ponto_referencia: dadosCliente.ponto_referencia
-        })
+        } as any)
         console.log('✅ Cliente registrado')
       } catch (error) {
         console.log('ℹ️ Cliente já existe ou erro ao criar:', error)
