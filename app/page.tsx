@@ -819,182 +819,181 @@ export default function Home() {
 
     {/* ETAPA 3: PAGAMENTO PIX */}
     {etapa === 3 && (
-        <main className="flex-1 w-full">
-          <div className="max-w-4xl mx-auto px-3 sm:px-4 py-4 sm:py-6">
-            <div className="bg-white rounded-xl sm:rounded-2xl shadow-xl p-4 sm:p-6 md:p-8 space-y-4 sm:space-y-6">
+      <main className="flex-1 w-full">
+        <div className="max-w-4xl mx-auto px-3 sm:px-4 py-4 sm:py-6">
+          <div className="bg-white rounded-xl sm:rounded-2xl shadow-xl p-4 sm:p-6 md:p-8 space-y-4 sm:space-y-6">
 
-              {/* DADOS DO CLIENTE */}
-              <div className="bg-blue-50 rounded-lg p-3 sm:p-4">
-                <h3 className="font-bold text-sm sm:text-base mb-2">Dados do Cliente</h3>
-                <div className="space-y-0.5 sm:space-y-1 text-xs sm:text-sm text-gray-700">
-                  <p><span className="font-semibold">Nome:</span> {dadosCliente.nome}</p>
-                  <p><span className="font-semibold">CPF:</span> {dadosCliente.cpf}</p>
-                  {dadosCliente.telefone && (
-                    <p><span className="font-semibold">Telefone:</span> {dadosCliente.telefone}</p>
-                  )}
-                  {dadosCliente.rua && (
-                    <p><span className="font-semibold">Endereço:</span> {dadosCliente.rua}, {dadosCliente.numero} - {dadosCliente.bairro}</p>
-                  )}
-                  <p><span className="font-semibold">Cidade:</span> {dadosCliente.cidade}/{dadosCliente.estado}</p>
-                </div>
+            {/* DADOS DO CLIENTE */}
+            <div className="bg-blue-50 rounded-lg p-3 sm:p-4">
+              <h3 className="font-bold text-sm sm:text-base mb-2">Dados do Cliente</h3>
+              <div className="space-y-0.5 sm:space-y-1 text-xs sm:text-sm text-gray-700">
+                <p><span className="font-semibold">Nome:</span> {dadosCliente.nome}</p>
+                <p><span className="font-semibold">CPF:</span> {dadosCliente.cpf}</p>
+                {dadosCliente.telefone && (
+                  <p><span className="font-semibold">Telefone:</span> {dadosCliente.telefone}</p>
+                )}
+                {dadosCliente.rua && (
+                  <p><span className="font-semibold">Endereço:</span> {dadosCliente.rua}, {dadosCliente.numero} - {dadosCliente.bairro}</p>
+                )}
+                <p><span className="font-semibold">Cidade:</span> {dadosCliente.cidade}/{dadosCliente.estado}</p>
               </div>
-
-              {/* PRODUTOS */}
-              <div>
-                <h3 className="font-bold text-sm sm:text-sm mb-2">Produtos</h3>
-                {carrinho.map((item, index) => (
-                  <div className="flex justify-between items-start gap-3 py-1.5 sm:py-2 text-sm text-gray-700" key={index}>
-                    <div className="flex-1 min-w-0">
-                      <span className="font-semibold">{item.qtd}x</span> {item.nome}
-                    </div>
-                    <div className="flex-shrink-0 font-semibold whitespace-nowrap ml-2">
-                      R$ {(item.preco * item.qtd).toFixed(2)}
-                    </div>
-                  </div>
-                ))}
-                
-                {/* SUBTOTAL */}
-                <div className="flex justify-between text-xs sm:text-sm py-1.5 sm:py-2 text-gray-700">
-                  <span>Subtotal:</span>
-                  <span className="font-semibold">R$ {subtotal.toFixed(2)}</span>
-                </div>
-                
-                {/* TAXA DE ENTREGA */}
-                <div className="flex justify-between text-xs sm:text-sm py-1.5 sm:py-2 text-gray-700">
-                  <span>Taxa de Entrega:</span>
-                  <span className="font-semibold">R$ {TAXA_ENTREGA.toFixed(2)}</span>
-                </div>
-                
-                {/* LINHA DIVISÓRIA */}
-                <div className="border-t border-gray-300 my-1.5 sm:my-2"></div>
-                
-                {/* TOTAL */}
-                <div className="flex justify-between text-base sm:text-lg font-bold mt-2 sm:mt-3">
-                  <span>Total do Pedido</span>
-                  <span className="text-orange-500">R$ {total.toFixed(2)}</span>
-                </div>
-              </div>
-
-              {/* BLOCO PIX */}
-              {carregandoPix ? (
-                <div className="bg-green-50 rounded-lg p-6 sm:p-8 text-center">
-                  <div className="animate-spin rounded-full h-10 w-10 sm:h-12 sm:w-12 border-b-4 border-green-600 mx-auto mb-3 sm:mb-4"></div>
-                  <p className="font-semibold text-sm sm:text-base text-gray-700">Gerando pagamento PIX...</p>
-                </div>
-              ) : pixGerado && (
-                <div className="bg-green-50 rounded-xl sm:rounded-2xl p-4 sm:p-6 space-y-4 sm:space-y-6">
-                  <h3 className="font-bold text-green-700 text-base sm:text-lg">Pagamento via PIX - PagBank</h3>
-
-                  {/* GRID PIX */}
-                  <div className="grid md:grid-cols-2 gap-4 sm:gap-6">
-
-                    {/* QR CODE */}
-                    <div className="bg-white rounded-xl p-3 sm:p-4 text-center">
-                      {pixGerado.qr_code_base64 && (
-                        <img
-                          src={`data:image/png;base64,${pixGerado.qr_code_base64}`}
-                          alt="QR Code PIX"
-                          className="mx-auto w-44 h-44 sm:w-56 sm:h-56"
-                        />
-                      )}
-                      <p className="text-xs sm:text-sm text-gray-600 mt-2 sm:mt-3">Escaneie com o app do seu banco</p>
-                    </div>
-
-                    {/* INFO */}
-                    <div className="space-y-3 sm:space-y-4">
-
-                      {/* COPIAR */}
-                      <button
-                        onClick={() => {
-                          navigator.clipboard.writeText(pixGerado.qr_code)
-                          setMensagemToast('✓ Código PIX copiado!')
-                          setMostrarToast(true)
-                        }}
-                        className="w-full bg-green-600 hover:bg-green-700 text-white py-3 sm:py-4 rounded-xl text-sm sm:text-base font-bold flex items-center justify-center gap-2 transition-colors"
-                      >
-                        <svg className="w-5 h-5 sm:w-6 sm:h-6" fill="currentColor" viewBox="0 0 24 24">
-                          <path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2z" />
-                        </svg> Copiar Código PIX
-                      </button>
-
-                      {/* VALOR */}
-                      <div className="bg-green-100 rounded-xl p-3 sm:p-4 text-center">
-                        <p className="text-xs sm:text-sm text-gray-600">Valor a pagar</p>
-                        <p className="text-2xl sm:text-3xl font-bold text-green-700">R$ {total.toFixed(2)}</p>
-                      </div>
-
-                      {/* PASSOS */}
-                      <ol className="text-xs sm:text-sm text-gray-700 space-y-0.5 sm:space-y-1">
-                        <li>1. Abra o app do seu banco</li>
-                        <li>2. Escaneie o QR Code ou copie o código</li>
-                        <li>3. Confirme o pagamento</li>
-                        <li>4. Aguarde a confirmação</li>
-                      </ol>
-
-                    </div>
-                  </div>
-
-                  {/* STATUS DO PAGAMENTO */}
-                  {statusPagamento === 'pendente' ? (
-                    /* AGUARDANDO - AMARELO */
-                    <div className="bg-yellow-100 border-l-4 border-yellow-500 rounded-lg p-3 sm:p-4 font-semibold text-xs sm:text-sm text-yellow-800 flex items-center gap-2 sm:gap-3">
-                      <div className="animate-spin rounded-full h-4 w-4 sm:h-5 sm:w-5 border-b-2 border-yellow-600" />
-                      <span>Aguardando confirmação do pagamento...</span>
-                    </div>
-                  ) : (
-                    /* CONFIRMADO - AZUL */
-                    <div className="bg-blue-100 border-l-4 border-blue-500 rounded-lg p-3 sm:p-4 font-semibold text-xs sm:text-sm text-blue-800 flex items-center gap-2 sm:gap-3">
-                      <svg className="w-5 h-5 sm:w-6 sm:h-6 text-blue-600 flex-shrink-0" fill="currentColor" viewBox="0 0 24 24">
-                        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
-                      </svg>
-                      <span>Pagamento confirmado!</span>
-                    </div>
-                  )}
-                  
-                  {/* COMO PROCEDER */}
-                  <div className="bg-blue-100 border-l-4 border-blue-500 rounded-lg p-3 sm:p-4">
-                    <h4 className="font-bold text-xs sm:text-sm text-blue-800 mb-1.5 sm:mb-2 flex items-center gap-2">
-                      <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="currentColor" viewBox="0 0 24 24">
-                        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"></path>
-                      </svg>
-                      Como proceder
-                    </h4>
-                    <ol className="text-xs sm:text-sm text-blue-900 list-decimal list-inside space-y-0.5 sm:space-y-1">
-                      <li>Realize o pagamento via PIX</li>
-                      <li>Aguarde a confirmação automática</li>
-                      <li>Após confirmado, o pedido será enviado para a loja</li>
-                    </ol>
-                  </div>
-
-                  {/* IDs */}
-                  <div className="text-[10px] sm:text-xs text-center text-gray-500 space-y-0.5">
-                    <p>ID do Pedido PagBank: <span className="font-mono font-bold">{pixGerado.id}</span></p>
-                    {pixGerado.reference_id && (
-                      <p>Referência: <span className="font-mono font-bold">{pixGerado.reference_id}</span></p>
-                    )}
-                    {vendaId && (
-                      <p>ID da Venda: <span className="font-mono font-bold">#{vendaId}</span></p>
-                    )}
-                  </div>
-
-                  {/* CANCELAR */}
-                  <button
-                    onClick={() => {
-                      setCarrinho([])
-                      setEtapa(1)
-                      setPixGerado(null)
-                      setStatusPagamento('pendente')
-                      setVendaId(null)
-                    }}
-                    className="w-full bg-gray-200 hover:bg-gray-300 py-2.5 sm:py-3 rounded-xl text-sm sm:text-base font-semibold transition-colors"
-                  >
-                    Cancelar
-                  </button>
-
-                </div>
-              )}
-
             </div>
+
+            {/* PRODUTOS */}
+            <div>
+              <h3 className="font-bold text-sm sm:text-sm mb-2">Produtos</h3>
+              {carrinho.map((item, index) => (
+                <div className="flex justify-between items-start gap-3 py-1.5 sm:py-2 text-sm text-gray-700" key={index}>
+                  <div className="flex-1 min-w-0">
+                    <span className="font-semibold">{item.qtd}x</span> {item.nome}
+                  </div>
+                  <div className="flex-shrink-0 font-semibold whitespace-nowrap ml-2">
+                    R$ {(item.preco * item.qtd).toFixed(2)}
+                  </div>
+                </div>
+              ))}
+              
+              {/* SUBTOTAL */}
+              <div className="flex justify-between text-xs sm:text-sm py-1.5 sm:py-2 text-gray-700">
+                <span>Subtotal:</span>
+                <span className="font-semibold">R$ {subtotal.toFixed(2)}</span>
+              </div>
+              
+              {/* TAXA DE ENTREGA */}
+              <div className="flex justify-between text-xs sm:text-sm py-1.5 sm:py-2 text-gray-700">
+                <span>Taxa de Entrega:</span>
+                <span className="font-semibold">R$ {TAXA_ENTREGA.toFixed(2)}</span>
+              </div>
+              
+              {/* LINHA DIVISÓRIA */}
+              <div className="border-t border-gray-300 my-1.5 sm:my-2"></div>
+              
+              {/* TOTAL */}
+              <div className="flex justify-between text-base sm:text-lg font-bold mt-2 sm:mt-3">
+                <span>Total do Pedido</span>
+                <span className="text-orange-500">R$ {total.toFixed(2)}</span>
+              </div>
+            </div>
+
+            {/* BLOCO PIX */}
+            {carregandoPix ? (
+              <div className="bg-green-50 rounded-lg p-6 sm:p-8 text-center">
+                <div className="animate-spin rounded-full h-10 w-10 sm:h-12 sm:w-12 border-b-4 border-green-600 mx-auto mb-3 sm:mb-4"></div>
+                <p className="font-semibold text-sm sm:text-base text-gray-700">Gerando pagamento PIX...</p>
+              </div>
+            ) : pixGerado && (
+              <div className="bg-green-50 rounded-xl sm:rounded-2xl p-4 sm:p-6 space-y-4 sm:space-y-6">
+                <h3 className="font-bold text-green-700 text-base sm:text-lg">Pagamento via PIX - PagBank</h3>
+
+                {/* GRID PIX */}
+                <div className="grid md:grid-cols-2 gap-4 sm:gap-6">
+
+                  {/* QR CODE */}
+                  <div className="bg-white rounded-xl p-3 sm:p-4 text-center">
+                    {pixGerado.qr_code_base64 && (
+                      <img
+                        src={`data:image/png;base64,${pixGerado.qr_code_base64}`}
+                        alt="QR Code PIX"
+                        className="mx-auto w-44 h-44 sm:w-56 sm:h-56"
+                      />
+                    )}
+                    <p className="text-xs sm:text-sm text-gray-600 mt-2 sm:mt-3">Escaneie com o app do seu banco</p>
+                  </div>
+
+                  {/* INFO */}
+                  <div className="space-y-3 sm:space-y-4">
+
+                    {/* COPIAR */}
+                    <button
+                      onClick={() => {
+                        navigator.clipboard.writeText(pixGerado.qr_code)
+                        setMensagemToast('✓ Código PIX copiado!')
+                        setMostrarToast(true)
+                      }}
+                      className="w-full bg-green-600 hover:bg-green-700 text-white py-3 sm:py-4 rounded-xl text-sm sm:text-base font-bold flex items-center justify-center gap-2 transition-colors"
+                    >
+                      <svg className="w-5 h-5 sm:w-6 sm:h-6" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2z" />
+                      </svg> Copiar Código PIX
+                    </button>
+
+                    {/* VALOR */}
+                    <div className="bg-green-100 rounded-xl p-3 sm:p-4 text-center">
+                      <p className="text-xs sm:text-sm text-gray-600">Valor a pagar</p>
+                      <p className="text-2xl sm:text-3xl font-bold text-green-700">R$ {total.toFixed(2)}</p>
+                    </div>
+
+                    {/* PASSOS */}
+                    <ol className="text-xs sm:text-sm text-gray-700 space-y-0.5 sm:space-y-1">
+                      <li>1. Abra o app do seu banco</li>
+                      <li>2. Escaneie o QR Code ou copie o código</li>
+                      <li>3. Confirme o pagamento</li>
+                      <li>4. Aguarde a confirmação</li>
+                    </ol>
+
+                  </div>
+                </div>
+
+                {/* STATUS DO PAGAMENTO */}
+                {statusPagamento === 'pendente' ? (
+                  /* AGUARDANDO - AMARELO */
+                  <div className="bg-yellow-100 border-l-4 border-yellow-500 rounded-lg p-3 sm:p-4 font-semibold text-xs sm:text-sm text-yellow-800 flex items-center gap-2 sm:gap-3">
+                    <div className="animate-spin rounded-full h-4 w-4 sm:h-5 sm:w-5 border-b-2 border-yellow-600" />
+                    <span>Aguardando confirmação do pagamento...</span>
+                  </div>
+                ) : (
+                  /* CONFIRMADO - AZUL */
+                  <div className="bg-blue-100 border-l-4 border-blue-500 rounded-lg p-3 sm:p-4 font-semibold text-xs sm:text-sm text-blue-800 flex items-center gap-2 sm:gap-3">
+                    <svg className="w-5 h-5 sm:w-6 sm:h-6 text-blue-600 flex-shrink-0" fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+                    </svg>
+                    <span>Pagamento confirmado!</span>
+                  </div>
+                )}
+                
+                {/* COMO PROCEDER */}
+                <div className="bg-blue-100 border-l-4 border-blue-500 rounded-lg p-3 sm:p-4">
+                  <h4 className="font-bold text-xs sm:text-sm text-blue-800 mb-1.5 sm:mb-2 flex items-center gap-2">
+                    <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"></path>
+                    </svg>
+                    Como proceder
+                  </h4>
+                  <ol className="text-xs sm:text-sm text-blue-900 list-decimal list-inside space-y-0.5 sm:space-y-1">
+                    <li>Realize o pagamento via PIX</li>
+                    <li>Aguarde a confirmação automática</li>
+                    <li>Após confirmado, o pedido será enviado para a loja</li>
+                  </ol>
+                </div>
+
+                {/* IDs */}
+                <div className="text-[10px] sm:text-xs text-center text-gray-500 space-y-0.5">
+                  <p>ID do Pedido PagBank: <span className="font-mono font-bold">{pixGerado.id}</span></p>
+                  {pixGerado.reference_id && (
+                    <p>Referência: <span className="font-mono font-bold">{pixGerado.reference_id}</span></p>
+                  )}
+                  {vendaId && (
+                    <p>ID da Venda: <span className="font-mono font-bold">#{vendaId}</span></p>
+                  )}
+                </div>
+
+                {/* CANCELAR */}
+                <button
+                  onClick={() => {
+                    setCarrinho([])
+                    setEtapa(1)
+                    setPixGerado(null)
+                    setStatusPagamento('pendente')
+                    setVendaId(null)
+                  }}
+                  className="w-full bg-gray-200 hover:bg-gray-300 py-2.5 sm:py-3 rounded-xl text-sm sm:text-base font-semibold transition-colors"
+                >
+                  Cancelar
+                </button>
+
+              </div>
+            )}
+
           </div>
         </div>
       </main>
