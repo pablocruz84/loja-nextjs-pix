@@ -160,3 +160,5 @@ export async function GET() {
     time: new Date().toISOString()
   })
 }
+
+//Fim
