@@ -820,8 +820,8 @@ export default function AdminPage() {
 
       {/* 💳 ABA CONFIGURAÇÕES */}
       {menuAtivo === 'configuracoes' && (
-        <div className="space-y-6">
-          <h2 className="text-2xl font-bold">⚙️ Configurações da Loja</h2>
+        <div className="max-w-4xl mx-auto space-y-6">
+          <h2 className="text-2xl font-bold text-center">⚙️ Configurações da Loja</h2>
 
           {/* Mensagem de feedback */}
           {mensagemConfig && (
@@ -836,12 +836,12 @@ export default function AdminPage() {
 
           {/* Gateway de Pagamento */}
           <div className="bg-white p-6 rounded-lg shadow">
-            <h3 className="text-xl font-bold mb-4">💳 Gateway de Pagamento</h3>
-            <p className="text-gray-600 mb-6">
+            <h3 className="text-xl font-bold mb-4 text-center">💳 Gateway de Pagamento</h3>
+            <p className="text-gray-600 mb-6 text-center">
               Escolha qual gateway será usado para processar os pagamentos PIX.
             </p>
 
-            <div className="space-y-4">
+            <div className="space-y-4 max-w-2xl mx-auto">
               {/* Mercado Pago */}
               <label className={`flex items-start gap-4 p-4 border-2 rounded-lg cursor-pointer transition ${
                 gatewayAtivo === 'mercadopago' 
@@ -899,8 +899,8 @@ export default function AdminPage() {
           </div>
 
           {/* Status da Loja */}
-          <div className="bg-white p-6 rounded-lg shadow">
-            <h3 className="text-xl font-bold mb-4">🏪 Status da Loja</h3>
+          <div className="bg-white p-6 rounded-lg shadow max-w-2xl mx-auto">
+            <h3 className="text-xl font-bold mb-4 text-center">🏪 Status da Loja</h3>
             
             <label className="flex items-center justify-between p-4 bg-gray-50 rounded-lg cursor-pointer">
               <div>
@@ -926,6 +926,7 @@ export default function AdminPage() {
             </label>
           </div>
 
+          <div className="max-w-2xl mx-auto">
           {/* Botão Salvar */}
           <button
             onClick={salvarConfiguracoes}
@@ -946,6 +947,7 @@ export default function AdminPage() {
               </>
             )}
           </button>
+          </div>
         </div>
       )}
     </div>

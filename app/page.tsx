@@ -66,6 +66,9 @@ export default function Home() {
   const [statusPagamento, setStatusPagamento] =
     useState<'pendente' | 'aprovado'>('pendente')
 
+  // 💳 GATEWAY ATIVO (busca do banco de dados)
+  const [gatewayAtivo, setGatewayAtivo] = useState<'mercadopago' | 'pagbank'>('mercadopago')
+
   const TAXA_ENTREGA = 0
 
   // =========================
@@ -160,6 +163,26 @@ export default function Home() {
     return () => clearTimeout(t)
   }, [mostrarToast])
 
+  // Carregar gateway configurado no admin
+  useEffect(() => {
+    const carregarGateway = async () => {
+      try {
+        const response = await fetch('/api/configuracoes')
+        const data = await response.json()
+        
+        if (data.success && data.configuracoes) {
+          const gateway = data.configuracoes.gateway_pagamento || 'mercadopago'
+          setGatewayAtivo(gateway)
+          console.log('🏦 Gateway ativo configurado:', gateway)
+        }
+      } catch (error) {
+        console.error('Erro ao carregar gateway:', error)
+      }
+    }
+    
+    carregarGateway()
+  }, [])
+
   // 🔄 POLLING: Verificar pagamento DIRETAMENTE no PagBank
   useEffect(() => {
     if (!vendaId || !pixGerado || statusPagamento === 'aprovado') return
@@ -177,7 +200,8 @@ export default function Home() {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             paymentId: pixGerado.id,
-            vendaId: vendaId
+            vendaId: vendaId,
+            gateway: gatewayAtivo
           })
         })
 
@@ -280,9 +304,15 @@ export default function Home() {
       console.log('✅ Venda criada:', venda.id)
       setVendaId(venda.id)
 
-      // 3️⃣ TERCEIRO: Gerar PIX no PagBank COM vendaId
-      console.log('3️⃣ Gerando PIX no PagBank...')
-      const response = await fetch('/api/pagbank/pix', {
+      // 3️⃣ TERCEIRO: Gerar PIX no gateway configurado
+      const endpoint = gatewayAtivo === 'mercadopago' 
+        ? '/api/mercadopago/pix' 
+        : '/api/pagbank/pix'
+      
+      console.log('3️⃣ Usando gateway:', gatewayAtivo)
+      console.log('Endpoint:', endpoint)
+      
+      const response = await fetch(endpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
