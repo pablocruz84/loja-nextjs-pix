@@ -357,7 +357,7 @@ export default function AdminPage() {
       </aside>
 
       {/* CONTEÚDO PRINCIPAL */}
-      <main className="flex-1 overflow-auto">
+      <main className="flex-1 overflow-auto justify-center">
         {/* CADASTRO DE PRODUTOS */}
         {menuAtivo === 'produtos' && (
           <div className="p-8">
