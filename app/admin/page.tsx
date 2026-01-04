@@ -38,6 +38,10 @@ export default function AdminPage() {
   const [clientes, setClientes] = useState<Cliente[]>([])
   const [carregandoVendas, setCarregandoVendas] = useState(false)
   const [carregandoClientes, setCarregandoClientes] = useState(false)
+  const [gatewayAtivo, setGatewayAtivo] = useState<'mercadopago' | 'pagbank'>('mercadopago')
+  const [lojaAtiva, setLojaAtiva] = useState(true)
+  const [salvandoConfig, setSalvandoConfig] = useState(false)
+  const [mensagemConfig, setMensagemConfig] = useState('')
 
   // Carregar produtos ao montar
   useEffect(() => {
@@ -57,6 +61,10 @@ export default function AdminPage() {
       carregarClientes()
     }
   }, [menuAtivo])
+
+  useEffect(() => {
+    carregarConfiguracoes()
+  }, [])
 
   const carregarProdutos = async () => {
     try {
@@ -94,6 +102,50 @@ export default function AdminPage() {
       alert('Erro ao carregar clientes do banco de dados')
     } finally {
       setCarregandoClientes(false)
+    }
+  }
+
+
+  // 💳 FUNÇÕES DE CONFIGURAÇÃO
+  const carregarConfiguracoes = async () => {
+    try {
+      const response = await fetch('/api/configuracoes')
+      const data = await response.json()
+
+      if (data.success && data.configuracoes) {
+        setGatewayAtivo(data.configuracoes.gateway_pagamento || 'mercadopago')
+        setLojaAtiva(data.configuracoes.loja_ativa !== false)
+      }
+    } catch (error) {
+      console.error('Erro ao carregar configurações:', error)
+    }
+  }
+
+  const salvarConfiguracoes = async () => {
+    setSalvandoConfig(true)
+    try {
+      const response = await fetch('/api/configuracoes', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          gateway_pagamento: gatewayAtivo,
+          loja_ativa: lojaAtiva
+        })
+      })
+
+      const data = await response.json()
+
+      if (data.success) {
+        setMensagemConfig('✅ Configurações salvas com sucesso!')
+        setTimeout(() => setMensagemConfig(''), 3000)
+      } else {
+        setMensagemConfig('❌ Erro ao salvar configurações')
+      }
+    } catch (error) {
+      console.error('Erro ao salvar:', error)
+      setMensagemConfig('❌ Erro ao salvar configurações')
+    } finally {
+      setSalvandoConfig(false)
     }
   }
 
@@ -281,6 +333,18 @@ export default function AdminPage() {
               <path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/>
             </svg>
             <span className="font-semibold">CLIENTES</span>
+          </button>
+
+          <button
+            onClick={() => setMenuAtivo('configuracoes')}
+            className={`flex items-center gap-2 px-4 py-3 rounded-lg transition ${
+              menuAtivo === 'configuracoes' ? 'bg-blue-500 text-white' : 'bg-white hover:bg-gray-50'
+            }`}
+          >
+            <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/>
+            </svg>
+            Configurações
           </button>
         </nav>
 
@@ -749,6 +813,137 @@ export default function AdminPage() {
               </div>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* 💳 ABA CONFIGURAÇÕES */}
+      {menuAtivo === 'configuracoes' && (
+        <div className="space-y-6">
+          <h2 className="text-2xl font-bold">⚙️ Configurações da Loja</h2>
+
+          {/* Mensagem de feedback */}
+          {mensagemConfig && (
+            <div className={`p-4 rounded-lg ${
+              mensagemConfig.includes('✅') 
+                ? 'bg-green-100 text-green-800 border-l-4 border-green-500' 
+                : 'bg-red-100 text-red-800 border-l-4 border-red-500'
+            }`}>
+              {mensagemConfig}
+            </div>
+          )}
+
+          {/* Gateway de Pagamento */}
+          <div className="bg-white p-6 rounded-lg shadow">
+            <h3 className="text-xl font-bold mb-4">💳 Gateway de Pagamento</h3>
+            <p className="text-gray-600 mb-6">
+              Escolha qual gateway será usado para processar os pagamentos PIX.
+            </p>
+
+            <div className="space-y-4">
+              {/* Mercado Pago */}
+              <label className={`flex items-start gap-4 p-4 border-2 rounded-lg cursor-pointer transition ${
+                gatewayAtivo === 'mercadopago' 
+                  ? 'border-blue-500 bg-blue-50' 
+                  : 'border-gray-200 hover:border-gray-300'
+              }`}>
+                <input
+                  type="radio"
+                  name="gateway"
+                  value="mercadopago"
+                  checked={gatewayAtivo === 'mercadopago'}
+                  onChange={() => setGatewayAtivo('mercadopago')}
+                  className="mt-1 w-5 h-5 text-blue-600"
+                />
+                <div className="flex-1">
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="font-bold text-lg">Mercado Pago</span>
+                    {gatewayAtivo === 'mercadopago' && (
+                      <span className="bg-blue-500 text-white text-xs px-2 py-1 rounded-full">ATIVO</span>
+                    )}
+                  </div>
+                  <p className="text-sm text-gray-600">
+                    Funciona imediatamente sem aprovação prévia.
+                  </p>
+                </div>
+              </label>
+
+              {/* PagBank */}
+              <label className={`flex items-start gap-4 p-4 border-2 rounded-lg cursor-pointer transition ${
+                gatewayAtivo === 'pagbank' 
+                  ? 'border-green-500 bg-green-50' 
+                  : 'border-gray-200 hover:border-gray-300'
+              }`}>
+                <input
+                  type="radio"
+                  name="gateway"
+                  value="pagbank"
+                  checked={gatewayAtivo === 'pagbank'}
+                  onChange={() => setGatewayAtivo('pagbank')}
+                  className="mt-1 w-5 h-5 text-green-600"
+                />
+                <div className="flex-1">
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="font-bold text-lg">PagBank</span>
+                    {gatewayAtivo === 'pagbank' && (
+                      <span className="bg-green-500 text-white text-xs px-2 py-1 rounded-full">ATIVO</span>
+                    )}
+                  </div>
+                  <p className="text-sm text-gray-600">
+                    Requer aprovação prévia (1-2 dias).
+                  </p>
+                </div>
+              </label>
+            </div>
+          </div>
+
+          {/* Status da Loja */}
+          <div className="bg-white p-6 rounded-lg shadow">
+            <h3 className="text-xl font-bold mb-4">🏪 Status da Loja</h3>
+            
+            <label className="flex items-center justify-between p-4 bg-gray-50 rounded-lg cursor-pointer">
+              <div>
+                <p className="font-semibold mb-1">Loja Online</p>
+                <p className="text-sm text-gray-600">
+                  {lojaAtiva ? 'Clientes podem fazer pedidos' : 'Loja em manutenção'}
+                </p>
+              </div>
+              <div className="relative inline-block w-14 h-7">
+                <input
+                  type="checkbox"
+                  checked={lojaAtiva}
+                  onChange={(e) => setLojaAtiva(e.target.checked)}
+                  className="sr-only"
+                />
+                <div className={`w-14 h-7 rounded-full transition ${
+                  lojaAtiva ? 'bg-green-500' : 'bg-gray-300'
+                }`}></div>
+                <div className={`absolute left-1 top-1 w-5 h-5 bg-white rounded-full transition-transform ${
+                  lojaAtiva ? 'translate-x-7' : ''
+                }`}></div>
+              </div>
+            </label>
+          </div>
+
+          {/* Botão Salvar */}
+          <button
+            onClick={salvarConfiguracoes}
+            disabled={salvandoConfig}
+            className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 px-6 rounded-lg font-bold text-lg transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+          >
+            {salvandoConfig ? (
+              <>
+                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                Salvando...
+              </>
+            ) : (
+              <>
+                <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M17 3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V7l-4-4zm-5 16c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3-1.34 3-3 3zm3-10H5V5h10v4z"/>
+                </svg>
+                Salvar Configurações
+              </>
+            )}
+          </button>
         </div>
       )}
     </div>
