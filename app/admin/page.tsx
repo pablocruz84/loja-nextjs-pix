@@ -357,7 +357,7 @@ export default function AdminPage() {
       </aside>
 
       {/* CONTEÚDO PRINCIPAL */}
-      <main className="flex-1 w-full overflow-auto flex justify-center">
+      <main className="flex-1 overflow-auto">
         {/* CADASTRO DE PRODUTOS */}
         {menuAtivo === 'produtos' && (
           <div className="p-8">
@@ -820,7 +820,7 @@ export default function AdminPage() {
 
       {/* 💳 ABA CONFIGURAÇÕES */}
       {menuAtivo === 'configuracoes' && (
-        <div className="w-full max-w-4xl space-y-6">
+        <div className="max-w-4xl mx-auto space-y-6">
           <h2 className="text-2xl font-bold text-center">⚙️ Configurações da Loja</h2>
 
           {/* Mensagem de feedback */}
