@@ -356,10 +356,10 @@ export default function AdminPage() {
       </aside>
 
       {/* CONTEÚDO PRINCIPAL */}
-      <main className="flex-1 overflow-auto">
+      <main className="flex-1 overflow-auto p-6 md:p-8 lg:p-10">
         {/* CADASTRO DE PRODUTOS */}
         {menuAtivo === 'produtos' && (
-          <div className="p-8">
+          <div className="max-w-7xl mx-auto">
             <h1 className="text-3xl font-bold text-gray-800 mb-6">CADASTRO DE PRODUTOS</h1>
 
             <div className="bg-white rounded-lg shadow-md p-6 mb-6">
@@ -584,7 +584,7 @@ export default function AdminPage() {
 
         {/* LISTA DE VENDAS */}
         {menuAtivo === 'vendas' && (
-          <div className="p-8">
+          <div className="max-w-7xl mx-auto">
             <h1 className="text-3xl font-bold text-gray-800 mb-6">VENDAS</h1>
 
             <div className="bg-white rounded-lg shadow-md p-6">
@@ -643,7 +643,7 @@ export default function AdminPage() {
 
         {/* LISTA DE CLIENTES */}
         {menuAtivo === 'clientes' && (
-          <div className="p-8">
+          <div className="max-w-7xl mx-auto">
             <h1 className="text-3xl font-bold text-gray-800 mb-6">CLIENTES</h1>
 
             <div className="bg-white rounded-lg shadow-md p-6 mb-6">
